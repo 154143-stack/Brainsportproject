@@ -1,571 +1,972 @@
 <!DOCTYPE html>
-<html lang="nl" class="dark scroll-smooth">
+<html lang="nl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>De Schaal van het Heelal - VWO 2 / Gymnasium Onderzoeksproject</title>
-
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- FontAwesome Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
-  <!-- KaTeX for crisp scientific formulas -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
-
-  <!-- Google Fonts: Space Grotesk & Plus Jakarta Sans -->
+  <title>De Schaal van het Heelal - Brainsport VWO 2 / Gymnasium</title>
+  <!-- Google Font Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
-
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Plus Jakarta Sans', 'sans-serif'],
-            heading: ['Space Grotesk', 'sans-serif'],
-          },
-          colors: {
-            cosmic: {
-              950: '#030712',
-              900: '#0b0f19',
-              800: '#111827',
-              700: '#1f2937',
-              cyan: '#38bdf8',
-              gold: '#fbbf24',
-              purple: '#818cf8',
-              pink: '#f43f5e'
-            }
-          }
-        }
-      }
-    }
-  </script>
-
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+  
   <style>
-    /* Fixed cosmic background canvas */
-    #starfield {
+    :root {
+      --bg-dark: #050811;
+      --card-bg: rgba(15, 23, 42, 0.75);
+      --card-border: rgba(56, 189, 248, 0.2);
+      --card-border-hover: rgba(56, 189, 248, 0.5);
+      --accent-cyan: #38bdf8;
+      --accent-indigo: #6366f1;
+      --accent-purple: #a855f7;
+      --accent-pink: #ec4899;
+      --accent-gold: #fbbf24;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --glass-bg: rgba(15, 23, 42, 0.85);
+      --shadow-glow: 0 0 25px rgba(56, 189, 248, 0.15);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding-bottom: 80px;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Background Canvas Particle System */
+    #space-bg {
       position: fixed;
       top: 0;
       left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: -1;
       pointer-events: none;
     }
 
-    /* Glassmorphism containers */
-    .glass-card {
-      background: rgba(15, 23, 42, 0.75);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+    /* Container */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
     }
 
-    .glass-card-hover {
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Header & Hero */
+    header {
+      position: relative;
+      padding: 60px 20px 40px;
+      text-align: center;
+      background: radial-gradient(circle at center, rgba(30, 27, 75, 0.6) 0%, rgba(5, 8, 17, 0.95) 100%);
+      border-bottom: 1px solid var(--card-border);
+      backdrop-filter: blur(10px);
     }
 
-    .glass-card-hover:hover {
-      border-color: rgba(56, 189, 248, 0.4);
-      transform: translateY(-3px);
-      box-shadow: 0 12px 40px 0 rgba(56, 189, 248, 0.2);
+    .badge-container {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
     }
 
-    /* Custom range slider styling */
-    input[type=range] {
-      -webkit-appearance: none;
-      background: rgba(255, 255, 255, 0.15);
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(168, 85, 247, 0.2));
+      border: 1px solid rgba(168, 85, 247, 0.4);
+      color: #e0e7ff;
+      font-size: 0.85rem;
+      font-weight: 700;
+      padding: 6px 18px;
+      border-radius: 9999px;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      box-shadow: 0 0 15px rgba(168, 85, 247, 0.2);
+    }
+
+    .badge-gold {
+      background: linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(245, 158, 11, 0.2));
+      border-color: rgba(251, 191, 36, 0.4);
+      color: var(--accent-gold);
+    }
+
+    h1 {
+      font-size: clamp(2.2rem, 5vw, 3.8rem);
+      font-weight: 900;
+      line-height: 1.15;
+      margin-bottom: 18px;
+      background: linear-gradient(135deg, #ffffff 0%, #38bdf8 50%, #c084fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -1px;
+    }
+
+    .subtitle {
+      color: #cbd5e1;
+      font-size: clamp(1rem, 2vw, 1.25rem);
+      max-width: 850px;
+      margin: 0 auto 25px;
+      font-weight: 400;
+    }
+
+    .math-highlight {
+      font-family: 'Fira Code', monospace;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      padding: 2px 8px;
+      border-radius: 6px;
+      color: var(--accent-cyan);
+      font-size: 0.95em;
+      white-space: nowrap;
+    }
+
+    /* Navigation Links */
+    .nav-bar {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 25px;
+      flex-wrap: wrap;
+    }
+
+    .nav-btn {
+      color: var(--text-muted);
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid var(--card-border);
+      padding: 8px 16px;
       border-radius: 8px;
-      height: 10px;
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+      transition: all 0.25s ease;
     }
 
-    input[type=range]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      height: 26px;
-      width: 26px;
-      border-radius: 50%;
-      background: #38bdf8;
+    .nav-btn:hover {
+      color: var(--text-main);
+      border-color: var(--accent-cyan);
+      background: rgba(56, 189, 248, 0.15);
+      transform: translateY(-2px);
+    }
+
+    /* Cards & Layout */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 32px;
+      margin-top: 40px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      transition: border-color 0.3s ease;
+    }
+
+    .card:hover {
+      border-color: var(--card-border-hover);
+    }
+
+    .card-title-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      padding-bottom: 12px;
+    }
+
+    .card-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-indigo));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      color: white;
+      font-size: 1.2rem;
+    }
+
+    h2 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    p {
+      color: #cbd5e1;
+      margin-bottom: 16px;
+      font-size: 1rem;
+    }
+
+    /* Section 1: Research Framework Grid */
+    .framework-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .framework-box {
+      background: rgba(10, 15, 30, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .framework-box h3 {
+      font-size: 1.1rem;
+      color: var(--accent-cyan);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .units-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .units-list li {
+      background: rgba(30, 41, 59, 0.4);
+      padding: 12px;
+      border-radius: 8px;
+      border-left: 3px solid var(--accent-purple);
+      font-size: 0.95rem;
+    }
+
+    /* Section 2: Logarithmic Zoom Scale Explorer */
+    .zoom-explorer {
+      background: radial-gradient(circle at center, rgba(15, 23, 42, 0.9), rgba(5, 8, 17, 0.95));
+      border: 1px solid var(--accent-cyan);
+      border-radius: 16px;
+      padding: 25px;
+      box-shadow: var(--shadow-glow);
+    }
+
+    .slider-wrapper {
+      margin: 25px 0 15px;
+    }
+
+    input[type=range] {
+      width: 100%;
+      height: 12px;
+      border-radius: 6px;
+      background: #1e293b;
+      outline: none;
+      accent-color: var(--accent-cyan);
       cursor: pointer;
-      box-shadow: 0 0 18px #38bdf8;
-      transition: transform 0.15s ease, background-color 0.15s ease;
     }
 
-    input[type=range]::-webkit-slider-thumb:hover {
-      transform: scale(1.25);
-      background: #7dd3fc;
+    .slider-ticks {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 600;
     }
 
-    .glow-cyan {
-      text-shadow: 0 0 20px rgba(56, 189, 248, 0.6);
+    .slider-tick-item {
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .slider-tick-item:hover, .slider-tick-item.active {
+      color: var(--accent-cyan);
+    }
+
+    /* Visual Scale Representation Box */
+    .visual-viewport {
+      height: 240px;
+      background: #02040a;
+      border-radius: 12px;
+      border: 1px solid #1e293b;
+      margin-top: 20px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cosmic-object-circle {
+      border-radius: 50%;
+      transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 30px rgba(56, 189, 248, 0.3);
+      position: relative;
+    }
+
+    .object-label {
+      font-weight: 800;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.9);
+      color: #fff;
+      text-align: center;
+      pointer-events: none;
+    }
+
+    .stat-display-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+
+    .stat-card {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 16px;
+      border-radius: 10px;
+    }
+
+    .stat-card .lbl {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .stat-card .val {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    /* Section 3: Cosmic Levels Cards */
+    .levels-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 22px;
+      margin-top: 20px;
+    }
+
+    .level-card {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.3s ease;
+    }
+
+    .level-card:hover {
+      transform: translateY(-6px);
+      border-color: var(--accent-purple);
+      box-shadow: 0 12px 25px rgba(168, 85, 247, 0.15);
+    }
+
+    .level-tag {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--accent-purple);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    .level-card h3 {
+      font-size: 1.4rem;
+      color: var(--text-main);
+      margin-bottom: 10px;
+    }
+
+    .did-you-know {
+      background: rgba(168, 85, 247, 0.08);
+      border-left: 3px solid var(--accent-purple);
+      padding: 10px 12px;
+      border-radius: 0 8px 8px 0;
+      font-size: 0.88rem;
+      margin-top: 15px;
+      color: #e2e8f0;
+    }
+
+    /* Section 4: Relative Scale Calculator */
+    .calc-container {
+      background: rgba(10, 15, 30, 0.7);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 25px;
+    }
+
+    .calc-input-group {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      flex-wrap: wrap;
+      margin-bottom: 25px;
+    }
+
+    .calc-input-group label {
+      font-weight: 600;
+      font-size: 1.05rem;
+    }
+
+    .custom-num-input {
+      background: #0f172a;
+      border: 2px solid var(--accent-cyan);
+      color: #fff;
+      font-size: 1.2rem;
+      font-weight: bold;
+      padding: 8px 16px;
+      border-radius: 8px;
+      width: 130px;
+      outline: none;
+      font-family: 'Fira Code', monospace;
+    }
+
+    .calc-output-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 18px;
+    }
+
+    .calc-out-box {
+      background: rgba(30, 41, 59, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 18px;
+    }
+
+    .calc-out-box h4 {
+      color: var(--accent-cyan);
+      margin-bottom: 8px;
+      font-size: 1.1rem;
+    }
+
+    .calc-value {
+      font-family: 'Fira Code', monospace;
+      font-size: 1.1rem;
+      color: var(--accent-gold);
+      font-weight: 600;
+      word-break: break-word;
+    }
+
+    .calc-analogy {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    /* Section 5: Quiz Component */
+    .quiz-box {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .question-card {
+      background: rgba(10, 15, 30, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .question-card h4 {
+      font-size: 1.1rem;
+      margin-bottom: 14px;
+      color: var(--text-main);
+    }
+
+    .quiz-options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .quiz-btn {
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-main);
+      padding: 12px 18px;
+      border-radius: 8px;
+      text-align: left;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .quiz-btn:hover:not(:disabled) {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: var(--accent-cyan);
+    }
+
+    .quiz-btn.correct {
+      background: rgba(34, 197, 94, 0.2) !important;
+      border-color: #22c55e !important;
+      color: #4ade80 !important;
+    }
+
+    .quiz-btn.incorrect {
+      background: rgba(239, 68, 68, 0.2) !important;
+      border-color: #ef4444 !important;
+      color: #f87171 !important;
+    }
+
+    .explanation-box {
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      display: none;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .quiz-summary-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(168, 85, 247, 0.15));
+      border: 1px solid var(--accent-purple);
+      padding: 20px;
+      border-radius: 12px;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+
+    .action-btn {
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-indigo));
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .action-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(56, 189, 248, 0.3);
+    }
+
+    /* Diploma Modal / Certificate Card */
+    .diploma-card {
+      display: none;
+      background: radial-gradient(circle at center, #1e1b4b 0%, #090d16 100%);
+      border: 3px solid var(--accent-gold);
+      border-radius: 16px;
+      padding: 35px;
+      text-align: center;
+      margin-top: 25px;
+      box-shadow: 0 0 35px rgba(251, 191, 36, 0.25);
+      position: relative;
+    }
+
+    .diploma-card h3 {
+      font-size: 2rem;
+      color: var(--accent-gold);
+      margin-bottom: 5px;
+      font-family: serif;
+    }
+
+    /* Section 6: Presentation Pitch Helper & Timer */
+    .pitch-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .timer-box {
+      background: #090d16;
+      border: 2px solid var(--accent-pink);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .timer-clock {
+      font-family: 'Fira Code', monospace;
+      font-size: 3.2rem;
+      font-weight: bold;
+      color: var(--accent-pink);
+      margin: 10px 0;
+    }
+
+    .timer-controls {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .btn-sm {
+      padding: 8px 16px;
+      font-size: 0.88rem;
+      border-radius: 6px;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-start { background: #22c55e; color: white; }
+    .btn-pause { background: #eab308; color: white; }
+    .btn-reset { background: #ef4444; color: white; }
+
+    .slide-guide-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .slide-item {
+      background: rgba(30, 41, 59, 0.4);
+      padding: 14px;
+      border-radius: 8px;
+      border-left: 3px solid var(--accent-cyan);
+    }
+
+    .slide-item h5 {
+      color: var(--accent-cyan);
+      font-size: 1rem;
+      margin-bottom: 4px;
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      margin-top: 60px;
+      padding: 30px;
+      color: var(--text-dim);
+      font-size: 0.9rem;
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+
+    @media (max-width: 768px) {
+      .card { padding: 20px; }
+      .visual-viewport { height: 180px; }
+      .timer-clock { font-size: 2.5rem; }
     }
   </style>
 </head>
-<body class="bg-cosmic-950 text-slate-100 font-sans antialiased selection:bg-cosmic-cyan selection:text-cosmic-950 min-h-screen relative overflow-x-hidden">
+<body>
 
-  <!-- Interactive Starfield Canvas Background -->
-  <canvas id="starfield"></canvas>
+  <!-- Particle Stars Background Canvas -->
+  <canvas id="space-bg"></canvas>
 
-  <!-- Sticky VWO Header Bar -->
-  <header class="fixed top-0 left-0 right-0 z-50 py-3 px-6 bg-cosmic-950/85 backdrop-blur-md border-b border-white/10">
-    <div class="max-w-7xl mx-auto flex justify-between items-center">
-      
-      <a href="#hero" class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-cosmic-cyan via-indigo-500 to-cosmic-pink flex items-center justify-center text-white shadow-lg shadow-cosmic-cyan/30">
-          <i class="fa-solid fa-atom"></i>
-        </div>
-        <div>
-          <span class="font-heading font-bold text-base sm:text-lg tracking-wider text-white block leading-none">DE SCHAAL VAN HET HEELAL</span>
-          <span class="text-xs text-cosmic-cyan font-semibold tracking-widest uppercase">VWO 2 / Gymnasium Project</span>
-        </div>
-      </a>
-
-      <!-- Desktop Nav links -->
-      <nav class="hidden md:flex items-center gap-6 text-sm font-medium">
-        <a href="#vwo-onderzoek" class="text-slate-300 hover:text-cosmic-cyan transition-colors">Onderzoekskader</a>
-        <a href="#zoom-explorer" class="text-slate-300 hover:text-cosmic-cyan transition-colors">Logaritmische Explorer</a>
-        <a href="#vwo-niveaus" class="text-slate-300 hover:text-cosmic-cyan transition-colors">4 Kosmische Niveaus</a>
-        <a href="#calculator" class="text-slate-300 hover:text-cosmic-cyan transition-colors">Schaal-Calculator</a>
-        <a href="#vwo-quiz" class="px-4 py-2 rounded-full bg-cosmic-cyan/15 border border-cosmic-cyan/40 text-cosmic-cyan hover:bg-cosmic-cyan hover:text-cosmic-950 transition-all font-semibold shadow-sm">
-          VWO Quiz
-        </a>
-      </nav>
-
-      <!-- Mobile Menu Button -->
-      <button id="mobileMenuBtn" class="md:hidden text-2xl text-slate-300 hover:text-white p-2" aria-label="Menu openen">
-        <i class="fa-solid fa-bars"></i>
-      </button>
+  <!-- Header -->
+  <header id="top">
+    <div class="badge-container">
+      <span class="badge">Brainsport Project</span>
+      <span class="badge badge-gold">VWO 2 / Gymnasium</span>
     </div>
+    <h1>De Schaal van het Heelal</h1>
+    <p class="subtitle">
+      Een diepgaande verkenning van de kosmische afstanden: Van onze thuisplaneet Aarde 
+      (<span class="math-highlight">1,27 × 10⁷ m</span>) tot de grenzen van het Waarneembare Heelal 
+      (<span class="math-highlight">8,8 × 10²⁶ m</span>).
+    </p>
 
-    <!-- Mobile Dropdown Menu -->
-    <div id="mobileMenu" class="hidden md:hidden absolute top-full left-0 right-0 bg-cosmic-950/95 backdrop-blur-xl border-b border-white/10 p-6 flex-col gap-4">
-      <a href="#vwo-onderzoek" class="mobile-link text-slate-300 hover:text-cosmic-cyan py-1 block">Onderzoekskader (VWO)</a>
-      <a href="#zoom-explorer" class="mobile-link text-slate-300 hover:text-cosmic-cyan py-1 block">Logaritmische Explorer</a>
-      <a href="#vwo-niveaus" class="mobile-link text-slate-300 hover:text-cosmic-cyan py-1 block">4 Kosmische Niveaus</a>
-      <a href="#calculator" class="mobile-link text-slate-300 hover:text-cosmic-cyan py-1 block">Schaal-Calculator</a>
-      <a href="#vwo-quiz" class="mobile-link py-3 rounded-xl bg-cosmic-cyan text-cosmic-950 font-bold text-center block">VWO Quiz</a>
-    </div>
+    <nav class="nav-bar">
+      <a href="#kader" class="nav-btn">1. Onderzoekskader</a>
+      <a href="#explorer" class="nav-btn">2. Interactive Scale Explorer</a>
+      <a href="#niveaus" class="nav-btn">3. 4 Kosmische Niveaus</a>
+      <a href="#calculator" class="nav-btn">4. Relatieve Calculator</a>
+      <a href="#quiz" class="nav-btn">5. Brainsport Quiz</a>
+      <a href="#pitch" class="nav-btn">6. Presentatie Pitch & Timer</a>
+    </nav>
   </header>
 
-  <main class="relative z-10 pt-20">
+  <main class="container">
 
-    <!-- HERO SECTION -->
-    <section id="hero" class="min-h-[85vh] flex items-center justify-center px-6 py-16">
-      <div class="max-w-5xl mx-auto text-center space-y-8">
-
-        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-cosmic-cyan/10 border border-cosmic-cyan/30 text-cosmic-cyan text-xs sm:text-sm font-semibold tracking-wide">
-          <i class="fa-solid fa-graduation-cap"></i> Natuurkunde & Aardrijkskunde — VWO 2 / Gymnasium
-        </div>
-
-        <h1 class="font-heading font-bold text-4xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight text-white leading-tight">
-          De Schaal van het <span class="bg-gradient-to-r from-cosmic-cyan via-indigo-400 to-cosmic-pink bg-clip-text text-transparent glow-cyan">Heelal</span>
-        </h1>
-
-        <p class="text-lg sm:text-xl text-slate-300 max-w-3xl mx-auto font-light leading-relaxed">
-          Van de Aarde ($\approx 1{,}27 \times 10^7\text{ m}$) tot de horizon van het Waarneembare Heelal ($\approx 8{,}8 \times 10^{26}\text{ m}$). Een interactieve verkenning met wetenschappelijke diepgang, machten van 10, Astronomische Eenheden en lichtjaren.
-        </p>
-
-        <!-- Scientific Quick Stats -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto pt-4">
-          <div class="glass-card p-4 rounded-2xl text-center">
-            <div class="text-xl sm:text-2xl font-heading font-bold text-cosmic-cyan">1,2742 × 10⁴ km</div>
-            <div class="text-xs text-slate-400 uppercase tracking-wider mt-1">Diameter Aarde</div>
-          </div>
-          <div class="glass-card p-4 rounded-2xl text-center">
-            <div class="text-xl sm:text-2xl font-heading font-bold text-cosmic-gold">1,496 × 10⁸ km</div>
-            <div class="text-xs text-slate-400 uppercase tracking-wider mt-1">1 AE (Zon-Aarde)</div>
-          </div>
-          <div class="glass-card p-4 rounded-2xl text-center">
-            <div class="text-xl sm:text-2xl font-heading font-bold text-cosmic-purple">9,461 × 10¹² km</div>
-            <div class="text-xs text-slate-400 uppercase tracking-wider mt-1">1 Lichtjaar (Lj)</div>
-          </div>
-          <div class="glass-card p-4 rounded-2xl text-center">
-            <div class="text-xl sm:text-2xl font-heading font-bold text-cosmic-pink">8,8 × 10²⁶ m</div>
-            <div class="text-xs text-slate-400 uppercase tracking-wider mt-1">Waarneembaar Heelal</div>
-          </div>
-        </div>
-
-        <div class="flex flex-col sm:flex-row gap-4 justify-center items-center pt-6">
-          <a href="#zoom-explorer" class="w-full sm:w-auto px-8 py-4 rounded-full bg-gradient-to-r from-cosmic-cyan to-indigo-600 text-cosmic-950 font-bold text-lg hover:shadow-lg hover:shadow-cosmic-cyan/30 hover:scale-105 transition-all flex items-center justify-center gap-3">
-            Open Logaritmische Explorer <i class="fa-solid fa-sliders"></i>
-          </a>
-          <a href="#vwo-onderzoek" class="w-full sm:w-auto px-8 py-4 rounded-full glass-card hover:bg-white/10 text-white font-semibold text-lg transition-all flex items-center justify-center gap-2 border border-white/20">
-            <i class="fa-solid fa-book-open text-cosmic-cyan"></i> Bekijk Onderzoekskader
-          </a>
-        </div>
-
+    <!-- SECTION 1: Research Framework -->
+    <section class="card" id="kader">
+      <div class="card-title-container">
+        <div class="card-icon">1</div>
+        <h2>Onderzoekskader & Methodologie (Brainsport VWO 2)</h2>
       </div>
-    </section>
+      <p>
+        Bij het vak <strong>Brainsport</strong> analyseren we hoe wetenschappelijke wiskunde en natuurkunde ons helpen om verschijnselen te begrijpen die onze menselijke intuïtie te boven gaan.
+      </p>
 
-
-    <!-- VWO ONDERZOEKSKADER SECTION -->
-    <section id="vwo-onderzoek" class="py-20 px-6 max-w-7xl mx-auto">
-      <div class="glass-card rounded-3xl p-8 sm:p-12 border border-cosmic-cyan/30 relative overflow-hidden">
-        
-        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-10 border-b border-white/10 pb-6">
-          <div>
-            <span class="text-xs font-bold uppercase tracking-widest text-cosmic-cyan px-3 py-1 rounded-full bg-cosmic-cyan/10 border border-cosmic-cyan/30">
-              VWO 2 Projectopzet
-            </span>
-            <h2 class="font-heading font-bold text-3xl sm:text-4xl text-white mt-3">
-              Wetenschappelijk Onderzoekskader
-            </h2>
-          </div>
-          <div class="text-slate-400 text-xs sm:text-sm bg-white/5 p-4 rounded-2xl border border-white/10 max-w-md">
-            <i class="fa-solid fa-circle-info text-cosmic-cyan mr-1"></i> Dit kader formuleert de theoretische onderbouwing volgens het VWO-2 natuurkunde/aardrijkskunde curriculum.
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-
-          <!-- Hoofdvraag Card -->
-          <div class="glass-card p-6 rounded-2xl border border-white/10 space-y-3">
-            <div class="w-10 h-10 rounded-xl bg-cosmic-cyan/20 text-cosmic-cyan flex items-center justify-center text-xl font-bold">
-              <i class="fa-solid fa-circle-question"></i>
-            </div>
-            <h3 class="font-heading font-bold text-lg text-white">Hoofdvraag</h3>
-            <p class="text-slate-300 text-sm leading-relaxed italic">
-              "Hoe verhouden de verschillende kosmische structuren (Aarde, Zonnestelsel, Melkweg, Heelal) zich tot elkaar in fysische schaal, en welke wetenschappelijke maateenheden zijn noodzakelijk om deze afstanden uit te drukken?"
-            </p>
-          </div>
-
-          <!-- Deelvragen Card -->
-          <div class="glass-card p-6 rounded-2xl border border-white/10 space-y-3">
-            <div class="w-10 h-10 rounded-xl bg-cosmic-gold/20 text-cosmic-gold flex items-center justify-center text-xl font-bold">
-              <i class="fa-solid fa-list-check"></i>
-            </div>
-            <h3 class="font-heading font-bold text-lg text-white">Deelvragen</h3>
-            <ul class="text-slate-300 text-xs space-y-2 list-disc list-inside">
-              <li>Waarom schiet de kilometer tekort op kosmische schaal en gebruiken we wetmatigheden als AE en lichtjaar?</li>
-              <li>Hoe helpt de wetenschappelijke notatie ($10^x$) bij het vergelijken van extreem grote getallen?</li>
-              <li>Welke rol speelt de zwaartekracht bij het bijeenhouden van structuren op elk niveauniveau?</li>
-            </ul>
-          </div>
-
-          <!-- Kernbegrippen Card -->
-          <div class="glass-card p-6 rounded-2xl border border-white/10 space-y-3 md:col-span-2 lg:col-span-1">
-            <div class="w-10 h-10 rounded-xl bg-cosmic-purple/20 text-cosmic-purple flex items-center justify-center text-xl font-bold">
-              <i class="fa-solid fa-spell-check"></i>
-            </div>
-            <h3 class="font-heading font-bold text-lg text-white">VWO Kernbegrippen</h3>
-            <div class="space-y-2 text-xs text-slate-300">
-              <p><strong class="text-cosmic-cyan">Wetenschappelijke Notatie:</strong> Een getal geschreven als $a \times 10^n$ waarbij $1 \le a < 10$.</p>
-              <p><strong class="text-cosmic-gold">Astronomische Eenheid (AE):</strong> Gemiddelde afstand Aarde-Zon ($\approx 1{,}496 \times 10^8\text{ km}$).</p>
-              <p><strong class="text-cosmic-purple">Lichtjaar (Lj):</strong> De afstand die licht in vacuüm aflegt in 1 jaar ($\approx 9{,}46 \times 10^{12}\text{ km}$).</p>
-            </div>
-          </div>
-
-        </div>
-
-      </div>
-    </section>
-
-
-    <!-- LOGARITHMIC SCALE EXPLORER SECTION -->
-    <section id="zoom-explorer" class="py-20 px-6 max-w-7xl mx-auto">
-      <div class="text-center max-w-3xl mx-auto mb-12 space-y-3">
-        <span class="text-xs uppercase tracking-widest text-cosmic-cyan font-bold px-3 py-1 rounded-full bg-cosmic-cyan/10 border border-cosmic-cyan/30">
-          Interactieve Schaalverkenner
-        </span>
-        <h2 class="font-heading font-bold text-3xl sm:text-5xl text-white">
-          Logaritmische Zoom Explorer
-        </h2>
-        <p class="text-slate-300 text-sm sm:text-base">
-          Omdat afstanden in het heelal exponentieel toenemen, gebruiken we een logaritmische schaal (machten van 10 in meters). Sleep de slider om van atomair/planetaire schaal naar de rand van het heelal te reizen!
-        </p>
-      </div>
-
-      <!-- Slider Card -->
-      <div class="glass-card rounded-3xl p-6 sm:p-10 border border-white/15 space-y-8">
-        
-        <!-- Top Info Header -->
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white/5 p-6 rounded-2xl border border-white/10">
-          <div>
-            <div class="text-xs uppercase tracking-wider text-slate-400">Huidige Exponent ($10^x$ meter)</div>
-            <div id="explorer-exponent" class="text-3xl font-heading font-bold text-cosmic-cyan mt-1">10⁷ meter</div>
-          </div>
-          <div>
-            <div class="text-xs uppercase tracking-wider text-slate-400">Geselecteerde Structuur</div>
-            <div id="explorer-name" class="text-2xl font-heading font-bold text-white mt-1">De Aarde (Diameter)</div>
-          </div>
-          <div class="text-right">
-            <div class="text-xs uppercase tracking-wider text-slate-400">Afstand / Diameter in km</div>
-            <div id="explorer-km" class="text-xl font-heading font-bold text-cosmic-gold mt-1">12.742 km</div>
-          </div>
-        </div>
-
-        <!-- Range Slider -->
-        <div class="space-y-4">
-          <input type="range" id="logSlider" min="7" max="27" step="1" value="7" class="w-full">
-          <div class="flex justify-between text-xs text-slate-400 font-mono">
-            <span>10⁷ m (Aarde)</span>
-            <span>10¹¹ m (Zonnestelsel)</span>
-            <span>10²¹ m (Melkweg)</span>
-            <span>10²⁶ m (Heelal)</span>
-          </div>
-        </div>
-
-        <!-- Visual Dynamic Stage -->
-        <div id="explorer-stage" class="p-8 rounded-2xl bg-gradient-to-b from-cosmic-900 to-cosmic-950 border border-white/10 min-h-[220px] flex flex-col md:flex-row items-center gap-8 justify-between">
-          <!-- Dynamic JS content -->
-        </div>
-
-      </div>
-    </section>
-
-
-    <!-- THE 4 COSMIC LEVELS SECTION -->
-    <section id="vwo-niveaus" class="py-20 px-6 max-w-7xl mx-auto">
-      
-      <div class="text-center max-w-3xl mx-auto mb-16 space-y-3">
-        <span class="text-xs uppercase tracking-widest text-cosmic-cyan font-bold px-3 py-1 rounded-full bg-cosmic-cyan/10 border border-cosmic-cyan/30">
-          Diepgaand Curriculum
-        </span>
-        <h2 class="font-heading font-bold text-3xl sm:text-5xl text-white">
-          De 4 Kosmische Schaalniveaus
-        </h2>
-        <p class="text-slate-300 text-sm sm:text-base">
-          Selecteer een niveau voor een gedetailleerde natuurkundige en geografische analyse.
-        </p>
-      </div>
-
-      <!-- Level Selection Tabs -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-        
-        <button onclick="switchLevel(0)" id="lvl-tab-0" class="glass-card p-5 rounded-2xl text-left border-2 border-cosmic-cyan bg-cosmic-cyan/10 transition-all flex flex-col justify-between h-32 group">
-          <div class="flex justify-between items-center">
-            <span class="text-xs font-bold uppercase tracking-widest text-cosmic-cyan">Niveau 1</span>
-            <i class="fa-solid fa-earth-americas text-xl text-cosmic-cyan group-hover:scale-110 transition-transform"></i>
-          </div>
-          <div>
-            <h3 class="font-heading font-bold text-base sm:text-lg text-white">De Aarde</h3>
-            <p class="text-xs text-slate-400">$\approx 1{,}27 \times 10^7\text{ m}$</p>
-          </div>
-        </button>
-
-        <button onclick="switchLevel(1)" id="lvl-tab-1" class="glass-card p-5 rounded-2xl text-left border border-white/10 opacity-70 hover:opacity-100 transition-all flex flex-col justify-between h-32 group">
-          <div class="flex justify-between items-center">
-            <span class="text-xs font-bold uppercase tracking-widest text-cosmic-gold">Niveau 2</span>
-            <i class="fa-solid fa-sun text-xl text-cosmic-gold group-hover:scale-110 transition-transform"></i>
-          </div>
-          <div>
-            <h3 class="font-heading font-bold text-base sm:text-lg text-white">Zonnestelsel</h3>
-            <p class="text-xs text-slate-400">$\approx 10^{11} - 10^{13}\text{ m}$</p>
-          </div>
-        </button>
-
-        <button onclick="switchLevel(2)" id="lvl-tab-2" class="glass-card p-5 rounded-2xl text-left border border-white/10 opacity-70 hover:opacity-100 transition-all flex flex-col justify-between h-32 group">
-          <div class="flex justify-between items-center">
-            <span class="text-xs font-bold uppercase tracking-widest text-cosmic-purple">Niveau 3</span>
-            <i class="fa-solid fa-spaghetti-monster-flying text-xl text-cosmic-purple group-hover:scale-110 transition-transform"></i>
-          </div>
-          <div>
-            <h3 class="font-heading font-bold text-base sm:text-lg text-white">De Melkweg</h3>
-            <p class="text-xs text-slate-400">$\approx 10^{21}\text{ m}$</p>
-          </div>
-        </button>
-
-        <button onclick="switchLevel(3)" id="lvl-tab-3" class="glass-card p-5 rounded-2xl text-left border border-white/10 opacity-70 hover:opacity-100 transition-all flex flex-col justify-between h-32 group">
-          <div class="flex justify-between items-center">
-            <span class="text-xs font-bold uppercase tracking-widest text-cosmic-pink">Niveau 4</span>
-            <i class="fa-solid fa-infinity text-xl text-cosmic-pink group-hover:scale-110 transition-transform"></i>
-          </div>
-          <div>
-            <h3 class="font-heading font-bold text-base sm:text-lg text-white">Heelal</h3>
-            <p class="text-xs text-slate-400">$\approx 8{,}8 \times 10^{26}\text{ m}$</p>
-          </div>
-        </button>
-
-      </div>
-
-      <!-- Level Content Display Box -->
-      <div id="level-display-box" class="glass-card rounded-3xl p-6 sm:p-10 border border-white/15 relative overflow-hidden transition-all">
-        <!-- Dynamic content via JS -->
-      </div>
-
-    </section>
-
-
-    <!-- INTERACTIVE COSMIC SCALE COMPARISON CALCULATOR -->
-    <section id="calculator" class="py-20 px-6 max-w-7xl mx-auto">
-      <div class="glass-card rounded-3xl p-8 sm:p-12 border border-cosmic-cyan/30 relative">
-        
-        <div class="max-w-3xl mb-10">
-          <span class="text-xs uppercase tracking-widest text-cosmic-cyan font-bold px-3 py-1 rounded-full bg-cosmic-cyan/10 border border-cosmic-cyan/30">
-            Relatieve Schaal-Calculator
-          </span>
-          <h2 class="font-heading font-bold text-3xl sm:text-4xl text-white mt-3">
-            Gedachte-Experiment: Verklein de Aarde
-          </h2>
-          <p class="text-slate-300 mt-2 text-sm sm:text-base">
-            Omdat menselijke hersenen moeite hebben met getallen zoals $10^{21}$ meter, schalen we het universum af. Kies een alledaags voorwerp voor de Aarde en zie hoe groot de rest wordt!
+      <div class="framework-grid">
+        <div class="framework-box">
+          <h3>🔍 Hoofdvraag</h3>
+          <p style="font-size: 0.95rem;">
+            <em>"Hoe verhouden de vier kosmische niveaus (Aarde, Zonnestelsel, Melkweg en Waarneembaar Heelal) zich ordgrootte-technisch tot elkaar, en welke wiskundige eenheden zijn noodzakelijk om deze afstanden hanteerbaar te maken?"</em>
           </p>
         </div>
 
-        <!-- Model Selection -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
-          <button onclick="setCalcPreset(0)" id="calc-p-0" class="calc-preset-btn p-4 rounded-xl border-2 border-cosmic-cyan bg-cosmic-cyan/10 text-left transition-all">
-            <div class="text-xs text-cosmic-cyan font-bold">1 cm</div>
-            <div class="font-bold text-white text-sm">Knikker</div>
-          </button>
-          <button onclick="setCalcPreset(1)" id="calc-p-1" class="calc-preset-btn p-4 rounded-xl border border-white/10 bg-white/5 text-left transition-all">
-            <div class="text-xs text-slate-400 font-bold">4 cm</div>
-            <div class="font-bold text-white text-sm">Tafeltennisbal</div>
-          </button>
-          <button onclick="setCalcPreset(2)" id="calc-p-2" class="calc-preset-btn p-4 rounded-xl border border-white/10 bg-white/5 text-left transition-all">
-            <div class="text-xs text-slate-400 font-bold">22 cm</div>
-            <div class="font-bold text-white text-sm">Voetbal</div>
-          </button>
-          <button onclick="setCalcPreset(3)" id="calc-p-3" class="calc-preset-btn p-4 rounded-xl border border-white/10 bg-white/5 text-left transition-all">
-            <div class="text-xs text-slate-400 font-bold">20 m</div>
-            <div class="font-bold text-white text-sm">Heteluchtballon</div>
-          </button>
-        </div>
-
-        <!-- Calculated Output Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-          <!-- Zonnestelsel Output -->
-          <div class="p-6 rounded-2xl bg-gradient-to-br from-amber-500/10 to-transparent border border-amber-500/30 space-y-2">
-            <div class="flex items-center gap-2 text-cosmic-gold font-bold text-sm">
-              <i class="fa-solid fa-sun"></i> Afstand Aarde - Zon (1 AE)
-            </div>
-            <div id="calc-sun-val" class="text-2xl font-heading font-bold text-white">117,4 meter</div>
-            <p id="calc-sun-desc" class="text-xs text-slate-300">
-              De Zon staat op ruim een heel voetbalveld afstand!
-            </p>
-          </div>
-
-          <!-- Melkweg Output -->
-          <div class="p-6 rounded-2xl bg-gradient-to-br from-indigo-500/10 to-transparent border border-indigo-500/30 space-y-2">
-            <div class="flex items-center gap-2 text-cosmic-purple font-bold text-sm">
-              <i class="fa-solid fa-spaghetti-monster-flying"></i> Diameter Melkweg
-            </div>
-            <div id="calc-mw-val" class="text-2xl font-heading font-bold text-white">742.500 km</div>
-            <p id="calc-mw-desc" class="text-xs text-slate-300">
-              Bijna 2x de afstand van de echte Aarde naar de Maan!
-            </p>
-          </div>
-
-          <!-- Heelal Output -->
-          <div class="p-6 rounded-2xl bg-gradient-to-br from-pink-500/10 to-transparent border border-pink-500/30 space-y-2">
-            <div class="flex items-center gap-2 text-cosmic-pink font-bold text-sm">
-              <i class="fa-solid fa-infinity"></i> Waarneembaar Heelal
-            </div>
-            <div id="calc-uni-val" class="text-2xl font-heading font-bold text-white">690 Miljard km</div>
-            <p id="calc-uni-desc" class="text-xs text-slate-300">
-              Nog steeds groter dan het werkelijke zonnestelsel!
-            </p>
-          </div>
-
-        </div>
-
-      </div>
-    </section>
-
-
-    <!-- VWO 2 SCIENTIFIC QUIZ SECTION -->
-    <section id="vwo-quiz" class="py-20 px-6 max-w-4xl mx-auto">
-      <div class="glass-card p-8 sm:p-12 rounded-3xl border border-white/15">
-        
-        <div class="text-center space-y-3 mb-10">
-          <span class="text-xs uppercase tracking-widest text-cosmic-cyan font-bold px-3 py-1 rounded-full bg-cosmic-cyan/10 border border-cosmic-cyan/30">
-            VWO Toetsing
-          </span>
-          <h2 class="font-heading font-bold text-3xl sm:text-4xl text-white">
-            VWO 2 Kennis-Check
-          </h2>
-          <p class="text-slate-300 text-sm">
-            Test je inzicht in wetenschappelijke notatie, maateenheden en kosmische structuren.
+        <div class="framework-box">
+          <h3>💡 Hypothese</h3>
+          <p style="font-size: 0.95rem;">
+            Omdat alledaagse eenheden zoals kilometers te klein zijn voor kosmische afstanden (resulterend in onleesbare getallen met tientallen nullen), schalen de verhoudingen exponentieel via de wetenschappelijke notatie en lichtjaren.
           </p>
         </div>
 
-        <div id="quiz-box">
-          <!-- Quiz loaded dynamically via JS -->
+        <div class="framework-box" style="grid-column: 1 / -1;">
+          <h3>📐 Methodologie: Kosmische Meeteenheden</h3>
+          <ul class="units-list">
+            <li>
+              <strong>Wetenschappelijke Notatie (<span class="math-highlight">a × 10ⁿ</span>):</strong> 
+              Eén getal voor de komma (<span class="math-highlight">1 ≤ a < 10</span>) vermenigvuldigd met een macht van 10. Bijvoorbeeld: de afstand tot de zon is 149.600.000.000 m = <span class="math-highlight">1,496 × 10¹¹ m</span>.
+            </li>
+            <li>
+              <strong>Astronomische Eenheid (AE):</strong> 
+              De gemiddelde afstand van de Aarde tot de Zon. <span class="math-highlight">1 AE ≈ 1,496 × 10¹¹ m</span> (ongeveer 150 miljoen km). Ideaal voor berekeningen binnen ons zonnestelsel.
+            </li>
+            <li>
+              <strong>Lichtjaar (lj):</strong> 
+              De afstand die het licht in een vacuüm aflegt in één jaar tijd bij een snelheid van <span class="math-highlight">c ≈ 3,00 × 10⁸ m/s</span>. 
+              <br><span class="math-highlight">1 lj = 300.000 km/s × 3600s × 24u × 365,25d ≈ 9,461 × 10¹⁵ m</span>.
+            </li>
+          </ul>
         </div>
-
       </div>
     </section>
 
+    <!-- SECTION 2: Logarithmic Zoom Scale Explorer -->
+    <section class="card" id="explorer">
+      <div class="card-title-container">
+        <div class="card-icon">2</div>
+        <h2>Interactieve Logaritmische Schaal Explorer</h2>
+      </div>
+      <p>
+        Binnen alledaagse lineaire kaarten past het heelal niet. Gebruik onderstaande schuifbalk om logaritmisch uit te zoomen over 20 machten van tien!
+      </p>
 
-    <!-- VWO PRESENTATION & RUBRIC GUIDE SECTION -->
-    <section id="vwo-presentatie" class="py-20 px-6 max-w-7xl mx-auto">
-      <div class="glass-card p-8 sm:p-12 rounded-3xl border border-white/10 space-y-8">
-        
+      <div class="zoom-explorer">
+        <div class="slider-wrapper">
+          <input type="range" id="scaleSlider" min="0" max="3" step="1" value="0">
+          <div class="slider-ticks">
+            <span class="slider-tick-item active" onclick="setSlider(0)">1. Aarde</span>
+            <span class="slider-tick-item" onclick="setSlider(1)">2. Zonnestelsel</span>
+            <span class="slider-tick-item" onclick="setSlider(2)">3. Melkweg</span>
+            <span class="slider-tick-item" onclick="setSlider(3)">4. Waarneembaar Heelal</span>
+          </div>
+        </div>
+
+        <!-- Dynamic Visual Rendering -->
+        <div class="visual-viewport" id="visualViewport">
+          <div class="cosmic-object-circle" id="cosmicCircle">
+            <span class="object-label" id="circleLabel">Aarde</span>
+          </div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stat-display-grid" id="statDisplay">
+          <!-- Dynamically populated via JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 3: Detailed 4 Cosmic Levels Cards -->
+    <section class="card" id="niveaus">
+      <div class="card-title-container">
+        <div class="card-icon">3</div>
+        <h2>De Vier Kosmische Niveaus in Detail</h2>
+      </div>
+      <p>Analyse van de fysische structuren, diameters in meter-machten, en unieke astronomische kenmerken voor het vak Brainsport.</p>
+
+      <div class="levels-grid">
+        <!-- Level 1 -->
+        <div class="level-card">
+          <div>
+            <div class="level-tag">Niveau 1 • Planeet</div>
+            <h3>De Aarde</h3>
+            <p style="font-size:0.9rem; color:#cbd5e1;">Onze thuisbasis. Een rotsachtige planeet met een vloeibare ijzerkern die een beschermend magnetisch veld opwekt.</p>
+            <hr style="border-color: rgba(255,255,255,0.08); margin: 12px 0;">
+            <p style="font-size:0.85rem;"><strong>Diameter:</strong> 12.742 km</p>
+            <p style="font-size:0.85rem;"><strong>Wetenschappelijke Notatie:</strong> <span class="math-highlight">1,27 × 10⁷ m</span></p>
+            <p style="font-size:0.85rem;"><strong>Massa:</strong> <span class="math-highlight">5,97 × 10²⁴ kg</span></p>
+          </div>
+          <div class="did-you-know">
+            <strong>Wist je dat?</strong> Licht reist in slechts 0,13 seconden een heel rondje om de Aarde op de evenaar!
+          </div>
+        </div>
+
+        <!-- Level 2 -->
+        <div class="level-card">
+          <div>
+            <div class="level-tag">Niveau 2 • Sterrenstelsel-systeem</div>
+            <h3>Het Zonnestelsel</h3>
+            <p style="font-size:0.9rem; color:#cbd5e1;">Het zwaartekrachtsgebonden systeem van de Zon, 8 planeten, dwergplaneten, Kuipergordel en de ijzige Oortwolk.</p>
+            <hr style="border-color: rgba(255,255,255,0.08); margin: 12px 0;">
+            <p style="font-size:0.85rem;"><strong>Diameter Oortwolk:</strong> ≈ 100.000 AE</p>
+            <p style="font-size:0.85rem;"><strong>Wetenschappelijke Notatie:</strong> <span class="math-highlight">1,5 × 10¹⁵ m</span></p>
+            <p style="font-size:0.85rem;"><strong>Dominant Object:</strong> Zon (99,86% van alle massa)</p>
+          </div>
+          <div class="did-you-know">
+            <strong>Wist je dat?</strong> De verste ruimtesonde, Voyager 1, reist met 61.000 km/u en heeft ruim 46 jaar nodig gehad om pas 0,0025 lichtjaar af te leggen!
+          </div>
+        </div>
+
+        <!-- Level 3 -->
+        <div class="level-card">
+          <div>
+            <div class="level-tag">Niveau 3 • Balkeerstelsel</div>
+            <h3>De Melkweg</h3>
+            <p style="font-size:0.9rem; color:#cbd5e1;">Ons spiraalvormige sterrenstelsel met een centraal superzwaar zwart gat (Sagittarius A*) waarrond honderden miljarden sterren draaien.</p>
+            <hr style="border-color: rgba(255,255,255,0.08); margin: 12px 0;">
+            <p style="font-size:0.85rem;"><strong>Diameter:</strong> 100.000 lichtjaar</p>
+            <p style="font-size:0.85rem;"><strong>Wetenschappelijke Notatie:</strong> <span class="math-highlight">9,5 × 10²⁰ m</span></p>
+            <p style="font-size:0.85rem;"><strong>Aantal Sterren:</strong> 100 tot 400 miljard</p>
+          </div>
+          <div class="did-you-know">
+            <strong>Wist je dat?</strong> Het duurt ongeveer 230 miljoen jaar voor onze Zon om één 'galactisch jaar' af te leggen rond het centrum van de Melkweg.
+          </div>
+        </div>
+
+        <!-- Level 4 -->
+        <div class="level-card">
+          <div>
+            <div class="level-tag">Niveau 4 • Universum</div>
+            <h3>Waarneembaar Heelal</h3>
+            <p style="font-size:0.9rem; color:#cbd5e1;">Het totale volume van het heelal waarvan de lichtstralen sinds de Oerknal (13,8 miljard jaar geleden) de tijd hebben gehad om ons te bereiken.</p>
+            <hr style="border-color: rgba(255,255,255,0.08); margin: 12px 0;">
+            <p style="font-size:0.85rem;"><strong>Diameter:</strong> 93 miljard lichtjaar</p>
+            <p style="font-size:0.85rem;"><strong>Wetenschappelijke Notatie:</strong> <span class="math-highlight">8,8 × 10²⁶ m</span></p>
+            <p style="font-size:0.85rem;"><strong>Aantal Stelsels:</strong> ≈ 2.000 miljard</p>
+          </div>
+          <div class="did-you-know">
+            <strong>Wist je dat?</strong> Door de constante uitdijing van de ruimte is de fysieke diameter van het waarneembare heelal gegroeid van 27,6 miljard naar 93 miljard lichtjaar!
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 4: Relative Scale Calculator -->
+    <section class="card" id="calculator">
+      <div class="card-title-container">
+        <div class="card-icon">4</div>
+        <h2>Relatieve Schaal Calculator ("Als de Aarde 1 cm is...")</h2>
+      </div>
+      <p>
+        Aangezien het menselijk brein grote getallen moeilijk kan verbeelden, verkleinen we het universum schaalgetrouw. Kies een diameter voor de Aarde en bereken direct de afmetingen van het heelal op jouw schaal!
+      </p>
+
+      <div class="calc-container">
+        <div class="calc-input-group">
+          <label for="calcEarthSize">Stel: De Aarde heeft een diameter van:</label>
+          <input type="number" id="calcEarthSize" class="custom-num-input" value="1" min="0.1" step="0.5">
+          <select id="calcUnit" class="custom-num-input" style="width:auto; font-size:1rem;">
+            <option value="cm">centimeter (cm)</option>
+            <option value="mm">millimeter (mm)</option>
+            <option value="m">meter (m)</option>
+          </select>
+        </div>
+
+        <div class="calc-output-grid" id="calcResultsGrid">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 5: Brainsport Interactive Knowledge Quiz -->
+    <section class="card" id="quiz">
+      <div class="card-title-container">
+        <div class="card-icon">5</div>
+        <h2>Brainsport VWO 2 Kennisquiz & Certificaat</h2>
+      </div>
+      <p>Beantwoord alle 5 vragen correct om je officiële Brainsport VWO 2 Certificaat van Kosmische Schalen te ontgrendelen!</p>
+
+      <div class="quiz-box" id="quizBox">
+        <!-- Questions injected via JS -->
+      </div>
+
+      <div class="quiz-summary-bar" style="margin-top:20px;">
         <div>
-          <span class="text-xs uppercase tracking-widest text-cosmic-gold font-bold px-3 py-1 rounded-full bg-cosmic-gold/10 border border-cosmic-gold/30">
-            Project Spreekbeurt & Rubric
-          </span>
-          <h2 class="font-heading font-bold text-3xl text-white mt-3">
-            Samenvatting voor je Presentatie
-          </h2>
-          <p class="text-slate-300 text-sm mt-1">
-            Gebruik deze gestructureerde samenvatting direct bij het houden van je vwo-presentatie of het schrijven van je verslag.
-          </p>
+          <span style="font-size:0.9rem; color:var(--text-muted);">Voortgang:</span>
+          <h4 id="scoreTracker" style="font-size:1.2rem; color:var(--accent-gold);">0 van de 5 vragen beantwoord</h4>
+        </div>
+        <button class="action-btn" id="certBtn" onclick="generateCertificate()" disabled style="opacity:0.5; cursor:not-allowed;">
+          🎓 Genereer Brainsport Diploma
+        </button>
+      </div>
+
+      <!-- Diploma Render Box -->
+      <div class="diploma-card" id="diplomaCard">
+        <div style="text-transform:uppercase; font-size:0.8rem; letter-spacing:2px; color:var(--accent-cyan); margin-bottom:10px;">Officieel Brainsport VWO 2 Certificaat</div>
+        <h3>DIPLOMA KOSMISCHE SCHALEN</h3>
+        <p style="margin: 15px 0; font-size: 1.1rem; color: #f1f5f9;">
+          Hiermee wordt verklaard dat de leerling de wetenschappelijke verhoudingen van<br>
+          <strong>De Schaal van het Heelal</strong> op Gymnasium/VWO 2 niveau uitstekend beheerst!
+        </p>
+        <div style="display:flex; justify-content:space-around; margin-top:25px; border-top:1px dashed var(--accent-gold); padding-top:15px; font-size:0.9rem; color:var(--text-muted);">
+          <div>Vak: <strong>Brainsport VWO 2</strong></div>
+          <div>Score: <strong style="color:var(--accent-gold);">100% Correct</strong></div>
+          <div>Datum: <strong id="certDate"></strong></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 6: Presentation Pitch Helper & Timer -->
+    <section class="card" id="pitch">
+      <div class="card-title-container">
+        <div class="card-icon">6</div>
+        <h2>Presentatie Pitch Helper & Timer</h2>
+      </div>
+      <p>Gebruik deze ingebouwde spreekbeurt-timer en spreekpunten-gids om je klaspresentatie voor Brainsport perfect voor te bereiden.</p>
+
+      <div class="pitch-grid">
+        <!-- Timer -->
+        <div class="timer-box">
+          <h4 style="color:var(--text-muted); font-size:0.9rem; text-transform:uppercase;">Presentatie Timer (3 Min Pitch)</h4>
+          <div class="timer-clock" id="timerClock">03:00</div>
+          <div class="timer-controls">
+            <button class="btn-sm btn-start" onclick="startTimer()">▶ Start</button>
+            <button class="btn-sm btn-pause" onclick="pauseTimer()">⏸ Pauze</button>
+            <button class="btn-sm btn-reset" onclick="resetTimer()">🔄 Reset</button>
+          </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-slate-300">
-          <div class="bg-white/5 p-6 rounded-2xl border border-white/10 space-y-2">
-            <h3 class="font-heading font-bold text-white text-base text-cosmic-cyan">1. Introductie & Probleemstelling</h3>
-            <p>
-              In het dagelijks leven gebruiken we kilometers. Op planetaire en galactische schaal worden deze getallen onhandelbaar groot (bijv. $9{,}46 \times 10^{12}\text{ km}$ voor 1 lichtjaar). Daarom gebruikt de astrofysica de wetenschappelijke notatie en aangepaste eenheden zoals de AE en het lichtjaar.
-            </p>
-          </div>
-
-          <div class="bg-white/5 p-6 rounded-2xl border border-white/10 space-y-2">
-            <h3 class="font-heading font-bold text-white text-base text-cosmic-gold">2. De ROL van Zwaartekracht</h3>
-            <p>
-              Zwaartekracht ($F_g$) is de overkoepelende kracht die materie klontert: van de Aarde die haar atmosfeer vasthoudt, tot de Zon die planeten in hun baan houdt, en supermassieve zwarte gaten die hele spiraalstelsels organiseren.
-            </p>
-          </div>
-
-          <div class="bg-white/5 p-6 rounded-2xl border border-white/10 space-y-2">
-            <h3 class="font-heading font-bold text-white text-base text-cosmic-purple">3. Lichtreistijd & Tijdreizen</h3>
-            <p>
-              Omdat licht reist met een eindige snelheid ($c \approx 300.000\text{ km/s}$), kijken we bij het bestuderen van verre melkwegstelsels automatisch terug in de tijd. Het licht van Andromeda deed er $2{,}5 \text{ miljoen jaar}$ over om ons te bereiken.
-            </p>
-          </div>
-
-          <div class="bg-white/5 p-6 rounded-2xl border border-white/10 space-y-2">
-            <h3 class="font-heading font-bold text-white text-base text-cosmic-pink">4. Conclusie & Antwoord op Hoofdvraag</h3>
-            <p>
-              De Aarde is qua massa en omvang verwaarloosbaar klein in het universum. Echter, door middel van wiskunde, natuurkunde en logaritmische schalen is de mensheid in staat de gehele kosmos te modelleren en te begrijpen.
-            </p>
-          </div>
+        <!-- Structure Guide -->
+        <div>
+          <h4 style="margin-bottom:12px; color:var(--accent-cyan);">Spreekbeurt Opbouw (Slide per Slide)</h4>
+          <ul class="slide-guide-list">
+            <li class="slide-item">
+              <h5>Slide 1: De Hoofdvraag & Binariteit van Schaal</h5>
+              <p style="font-size:0.85rem; margin:0; color:#cbd5e1;">Introduceer de hoofdvraag. Leg uit waarom kilometernotaties falen bij het beschrijven van astronomische afstanden.</p>
+            </li>
+            <li class="slide-item">
+              <h5>Slide 2: Wiskundige Gereedschappen</h5>
+              <p style="font-size:0.85rem; margin:0; color:#cbd5e1;">Leg de <span class="math-highlight">a × 10ⁿ</span> wetenschappelijke notatie uit, evenals de Astronomische Eenheid (AE) en het Lichtjaar (lj).</p>
+            </li>
+            <li class="slide-item">
+              <h5>Slide 3: Van Aarde naar Waarneembaar Heelal</h5>
+              <p style="font-size:0.85rem; margin:0; color:#cbd5e1;">Demonstreer het Relatieve Schaalmodel ("Als de Aarde 1 cm is, hoe groot is de Melkweg dan?").</p>
+            </li>
+            <li class="slide-item">
+              <h5>Slide 4: Conclusie & Filosofische Reflectie</h5>
+              <p style="font-size:0.85rem; margin:0; color:#cbd5e1;">Beantwoord de hoofdvraag: Wat leert de schaal van het heelal ons over onze unieke plek in het universum?</p>
+            </li>
+          </ul>
         </div>
-
       </div>
     </section>
 
   </main>
 
-  <!-- FOOTER -->
-  <footer class="relative z-10 py-10 border-t border-white/10 bg-cosmic-950 text-center text-slate-400 text-xs sm:text-sm">
-    <div class="max-w-7xl mx-auto px-6 space-y-3">
-      <div class="flex justify-center items-center gap-2 font-heading font-bold text-white text-base">
-        <i class="fa-solid fa-atom text-cosmic-cyan"></i> DE SCHAAL VAN HET HEELAL &bull; VWO 2 / GYMNASIUM
-      </div>
-      <p class="text-slate-400 max-w-lg mx-auto">
-        Wetenschappelijk afgestemd op de Nederlandse VWO-2 eindtermen voor Natuurkunde & Aardrijkskunde.
-      </p>
-      <p class="text-slate-400">
-        &copy; 2026 Kosmisch VWO Onderzoeksproject &bull; Ontwikkeld voor vwo 2 / gymnasium leerlingen.
-      </p>
-    </div>
+  <footer>
+    <p>&copy; Brainsport VWO 2 / Gymnasium - Project "De Schaal van het Heelal"</p>
+    <p style="font-size:0.8rem; margin-top:5px; color:#475569;">Ontwikkeld met HTML5, CSS Variables, Canvas API en Vanilla JS.</p>
   </footer>
 
-
-  <!-- JAVASCRIPT CODE ENGINE -->
+  <!-- JAVASCRIPT LOGIC -->
   <script>
-    /* ========================================================
-       1. CANVAS STARFIELD BACKGROUND ANIMATION
-       ======================================================== */
-    const canvas = document.getElementById('starfield');
+    /* ===================================================
+       1. SPACE CANVAS PARTICLE SYSTEM
+       =================================================== */
+    const canvas = document.getElementById('space-bg');
     const ctx = canvas.getContext('2d');
     let stars = [];
 
@@ -577,541 +978,335 @@
 
     function initStars() {
       stars = [];
-      const count = Math.floor((canvas.width * canvas.height) / 2800);
-      for (let i = 0; i < count; i++) {
+      const numStars = Math.floor((canvas.width * canvas.height) / 3000);
+      for (let i = 0; i < numStars; i++) {
         stars.push({
           x: Math.random() * canvas.width,
           y: Math.random() * canvas.height,
-          radius: Math.random() * 1.4,
+          radius: Math.random() * 1.5,
           alpha: Math.random(),
-          speed: (Math.random() * 0.006) + 0.002
+          speed: Math.random() * 0.005 + 0.002
         });
       }
     }
 
-    function drawStars() {
+    function animateStars() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      stars.forEach(s => {
-        s.alpha += s.speed;
-        if (s.alpha > 1 || s.alpha < 0) s.speed = -s.speed;
+      stars.forEach(star => {
+        star.alpha += star.speed;
+        if (star.alpha > 1 || star.alpha < 0) {
+          star.speed = -star.speed;
+        }
         ctx.beginPath();
-        ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255, 255, 255, ${Math.abs(s.alpha)})`;
+        ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 255, 255, ${Math.abs(star.alpha)})`;
         ctx.fill();
       });
-      requestAnimationFrame(drawStars);
+      requestAnimationFrame(animateStars);
     }
 
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
-    drawStars();
+    animateStars();
 
-    /* ========================================================
-       2. MOBILE MENU INTERACTION
-       ======================================================== */
-    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-    const mobileMenu = document.getElementById('mobileMenu');
-
-    mobileMenuBtn.addEventListener('click', () => {
-      mobileMenu.classList.toggle('hidden');
-      mobileMenu.classList.toggle('flex');
-    });
-
-    document.querySelectorAll('.mobile-link').forEach(link => {
-      link.addEventListener('click', () => {
-        mobileMenu.classList.add('hidden');
-        mobileMenu.classList.remove('flex');
-      });
-    });
-
-    /* ========================================================
-       3. LOGARITHMIC ZOOM EXPLORER DATA & LOGIC
-       ======================================================== */
-    const explorerData = {
-      7: {
-        exponent: "10⁷ m",
-        name: "De Aarde (Diameter)",
-        km: "12.742 km",
-        icon: "fa-earth-americas",
+    /* ===================================================
+       2. LOGARITHMIC SCALE EXPLORER DATA & LOGIC
+       =================================================== */
+    const cosmicData = [
+      {
+        name: "Aarde",
         color: "#38bdf8",
-        desc: "De Aarde heeft een diameter van $1{,}27 \times 10^7\text{ m}$. Dit is de thuisbasis van de mens en de enige bekende plek met vloeibaar water.",
-        comparison: "Vergeleken met de Zon is de Aarde een klein stipje."
+        sizePx: 120,
+        diameterHuman: "12.742 kilometer",
+        sciNotation: "1,27 × 10⁷ m",
+        lightTravelTime: "0,042 seconden (diameter)",
+        comparison: "1.000.000× groter dan een menselijke stad.",
+        description: "Onze rotsachtige planeet. De enige bekende plek in het heelal waar leven voorkomt."
       },
-      9: {
-        exponent: "10⁹ m",
-        name: "Maanbaan & De Zon",
-        km: "1.392.700 km (Diameter Zon)",
-        icon: "fa-sun",
+      {
+        name: "Zonnestelsel (Oortwolk)",
         color: "#fbbf24",
-        desc: "De Zon heeft een diameter van $1{,}39 \times 10^9\text{ m}$. Er passen ruim 1,3 miljoen Aardes in het volume van de Zon.",
-        comparison: "100 keer groter dan de Aarde."
+        sizePx: 150,
+        diameterHuman: "≈ 150 miljard kilometer (100.000 AE)",
+        sciNotation: "1,5 × 10¹⁵ m",
+        lightTravelTime: "≈ 1,58 lichtjaar (19 maanden)",
+        comparison: "118.000.000× groter dan de Aarde.",
+        description: "Het domein van de Zon, planeten, asteroïden en kometen gebonden aan zwaartekracht."
       },
-      11: {
-        exponent: "10¹¹ m",
-        name: "Binnenste Zonnestelsel (1 AE)",
-        km: "149.597.870 km",
-        icon: "fa-circle-dot",
-        color: "#f59e0b",
-        desc: "De gemiddelde afstand tussen Aarde en Zon is $1{,}496 \times 10^{11}\text{ m}$. Dit definieert $1\text{ Astronomische Eenheid (AE)}$.",
-        comparison: "Licht doet er 8,3 minuten over om deze afstand te overbruggen."
-      },
-      13: {
-        exponent: "10¹³ m",
-        name: "Buitenste Zonnestelsel & Kuipergordel",
-        km: "approx. 10.000.000.000 km",
-        icon: "fa-ring",
+      {
+        name: "De Melkweg",
         color: "#a855f7",
-        desc: "Hier bevinden zich dwergplaneten zoals Pluto en de komeet-achtige objecten in de Kuipergordel ($10^{13}\text{ m}$).",
-        comparison: "Voyager 1 ruimtesonde heeft deze grens inmiddels gepasseerd."
+        sizePx: 180,
+        diameterHuman: "100.000 lichtjaar (946 biljard km)",
+        sciNotation: "9,5 × 10²⁰ m",
+        lightTravelTime: "100.000 jaar",
+        comparison: "630.000× groter dan ons hele Zonnestelsel.",
+        description: "Een gigantisch roterend spiraalstelsel met honderden miljarden sterren."
       },
-      16: {
-        exponent: "10¹⁶ m",
-        name: "Afstand tot Dichtstbijzijnde Ster (Proxima Centauri)",
-        km: "40.100.000.000.000 km (4,24 Lj)",
-        icon: "fa-star",
-        color: "#818cf8",
-        desc: "Op $4{,}0 \times 10^{16}\text{ m}$ vinden we de dichtstbijzijnde ster. Dit komt overeen met $4{,}24\text{ lichtjaar}$.",
-        comparison: "Met een traditionele raket zou de reis 70.000 jaar duren."
-      },
-      21: {
-        exponent: "10²¹ m",
-        name: "De Melkweg (Diameter)",
-        km: "9,46 × 10¹⁷ km (100.000 Lj)",
-        icon: "fa-spaghetti-monster-flying",
-        color: "#c084fc",
-        desc: "Ons spiraalvormige sterrenstelsel heeft een omvang van $10^{21}\text{ m}$ en bevat $200\text{ miljard sterren}$.",
-        comparison: "Het zonnestelsel bevindt zich op 26.000 Lj van het centrum."
-      },
-      24: {
-        exponent: "10²⁴ m",
-        name: "Virgo Supercluster",
-        km: "1,0 × 10²1 km (110 Miljoen Lj)",
-        icon: "fa-circle-nodes",
-        color: "#f43f5e",
-        desc: "Een verzameling van duizenden melkwegstelsels (waaronder onze Melkweg en Andromeda) gebonden door zwaartekracht.",
-        comparison: "Eén van de gigantische knooppunten in het kosmische web."
-      },
-      27: {
-        exponent: "10²⁶ m",
-        name: "Waarneembaar Heelal (Horizon)",
-        km: "8,8 × 10²³ km (93 Miljard Lj)",
-        icon: "fa-infinity",
+      {
+        name: "Waarneembaar Heelal",
         color: "#ec4899",
-        desc: "De grens van alles wat we theoretisch kunnen waarnemen ($8{,}8 \times 10^{26}\text{ m}$). Bevat circa $2\text{ biljoen stelsels}$.",
-        comparison: "Voorbij deze horizon heeft het licht ons nog niet kunnen bereiken."
-      }
-    };
-
-    const slider = document.getElementById('logSlider');
-
-    function updateExplorer() {
-      const val = parseInt(slider.value);
-      
-      // Find closest key in data
-      const keys = Object.keys(explorerData).map(Number);
-      const closest = keys.reduce((prev, curr) => Math.abs(curr - val) < Math.abs(prev - val) ? curr : prev);
-      const data = explorerData[closest];
-
-      document.getElementById('explorer-exponent').innerText = `10^${val} m`;
-      document.getElementById('explorer-name').innerText = data.name;
-      document.getElementById('explorer-km').innerText = data.km;
-
-      const stage = document.getElementById('explorer-stage');
-      stage.innerHTML = `
-        <div class="flex flex-col items-center justify-center p-6 bg-white/5 rounded-2xl border border-white/10 w-full md:w-1/3">
-          <i class="fa-solid ${data.icon} text-6xl mb-3 animate-pulse" style="color:${data.color}"></i>
-          <span class="text-xs uppercase font-bold text-slate-400">Schaalniveau</span>
-          <span class="text-lg font-heading font-bold text-white">${data.exponent}</span>
-        </div>
-        <div class="space-y-3 w-full md:w-2/3">
-          <h4 class="font-heading font-bold text-xl text-white" style="color:${data.color}">${data.name}</h4>
-          <p class="text-slate-300 text-sm leading-relaxed">${data.desc}</p>
-          <div class="p-3 rounded-xl bg-white/5 border border-white/10 text-xs text-slate-400">
-            <strong class="text-white">Vergelijking:</strong> ${data.comparison}
-          </div>
-        </div>
-      `;
-    }
-
-    slider.addEventListener('input', updateExplorer);
-    updateExplorer();
-
-    /* ========================================================
-       4. VWO 4 COSMIC LEVELS DATA & SWITCHER
-       ======================================================== */
-    const levelsList = [
-      {
-        title: "De Aarde",
-        subtitle: "Niveau 1 — Onze Thuisbasis in het Zonnestelsel",
-        color: "#38bdf8",
-        badgeBg: "rgba(56, 189, 248, 0.15)",
-        icon: "fa-earth-americas",
-        diameter: "12.742 km (1,2742 × 10⁷ m)",
-        lightTime: "0,042 seconden (omtrek)",
-        unit: "Kilometer (km) & Meter (m)",
-        gravity: "Oppervlaktezwaartekracht g = 9,81 m/s²",
-        description: "De Aarde is de derde planeet vanaf de Zon. Het is een terrestrische (rotsachtige) planeet met een stikstof-zuurstof atmosfeer en vloeibaar water aan het oppervlak.",
-        points: [
-          "<strong>Wetenschappelijke Notatie:</strong> Straal $R_A \approx 6{,}37 \times 10^6\text{ m}$. Masse $M_A \approx 5{,}97 \times 10^{24}\text{ kg}$.",
-          "<strong>Atmosfeer:</strong> Beschermt tegen zonnestraling en inslagen; de dampkring is op schaal dunner dan de schil van een appel.",
-          "<strong>Plaats van de mens:</strong> De omtrek is $40.075\text{ km}$. Licht reist in 0,13s een heel rondje om de Aarde."
-        ]
-      },
-      {
-        title: "Het Zonnestelsel",
-        subtitle: "Niveau 2 — Gravitationeel gebonden aan de Zon",
-        color: "#fbbf24",
-        badgeBg: "rgba(251, 191, 36, 0.15)",
-        icon: "fa-sun",
-        diameter: "≈ 100 AU (Kuipergordel) tot 100.000 AU (Oortwolk)",
-        lightTime: "8,3 minuten (Zon tot Aarde) / ~1,5 jaar (tot Oortwolk)",
-        unit: "Astronomische Eenheid (1 AE = 1,496 × 10⁸ km)",
-        gravity: "Gedomineerd door massa Zon (99,86% van alle massa)",
-        description: "Ons Zonnestelsel bestaat uit de Zon, 8 planeten, dwergplaneten (zoals Pluto) en miljarden kometen. De grens wordt bepaald door de heliosfeer en de Oortwolk.",
-        points: [
-          "<strong>1 AE / AU:</strong> De gemiddelde afstand Aarde-Zon ($1{,}496 \times 10^{11}\text{ m}$). Essentieel binnen ons zonnestelsel.",
-          "<strong>Opbouw:</strong> 4 rotsplaneten (Mercurius, Venus, Aarde, Mars) en 4 gas/ijsreuzen (Jupiter, Saturnus, Uranus, Neptunus).",
-          "<strong>Zwaartekracht:</strong> Planeten bewegen in elliptische banen volgens de wetten van Kepler en Newton."
-        ]
-      },
-      {
-        title: "De Melkweg",
-        subtitle: "Niveau 3 — Ons Spiraalvormig Sterrenstelsel",
-        color: "#818cf8",
-        badgeBg: "rgba(129, 140, 248, 0.15)",
-        icon: "fa-spaghetti-monster-flying",
-        diameter: "100.000 Lichtjaar (≈ 9,46 × 10¹⁷ km)",
-        lightTime: "100.000 jaar van rand tot rand",
-        unit: "Lichtjaar (1 Lj = 9,461 × 10¹² km)",
-        gravity: "Supermassief zwart gat Sagittarius A* (4 mln zonmassa's)",
-        description: "De Melkweg is een balkspiraalstelsel dat 100 tot 400 miljard sterren bevat. Ons zonnestelsel bevindt zich in de Orionarm op ongeveer 26.000 lichtjaar van het centrum.",
-        points: [
-          "<strong>Lichtjaar Definitie:</strong> De afstand afgelegd door licht in 1 jaar: $s = c \times t = 3 \times 10^8\text{ m/s} \times 31{,}56 \times 10^6\text{ s} \approx 9{,}46 \times 10^{15}\text{ m}$.",
-          "<strong>Galactisch Jaar:</strong> Ons zonnestelsel draait met $220\text{ km/s}$ om de kern en doet $230\text{ miljoen jaar}$ over 1 rondje.",
-          "<strong>Donkere Materie:</strong> Roterende sterren aan de buitenrand bewegen sneller dan verwacht; verklaard door onzichtbare donkere materie."
-        ]
-      },
-      {
-        title: "Het Waarneembare Heelal",
-        subtitle: "Niveau 4 — De Kosmische Licht-Horizon",
-        color: "#f43f5e",
-        badgeBg: "rgba(244, 63, 94, 0.15)",
-        icon: "fa-infinity",
-        diameter: "93 Miljard Lichtjaar (≈ 8,8 × 10²⁶ m)",
-        lightTime: "46,5 miljard jaar naar de horizon (in elke richting)",
-        unit: "Megaparsec (Mpc) & Miljarden Lichtjaren",
-        gravity: "Grootschalige structuur: Kosmisch Web & Superclusters",
-        description: "Het gedeelte van het heelal waarvan het licht sinds de Oerknal ($13{,}8\text{ miljard jaar}$ geleden) de Aarde heeft kunnen bereiken. Vanwege de uitdijing van de ruimte is de huidige straal 46,5 miljard lichtjaar.",
-        points: [
-          "<strong>2 Biljoen Stelsels:</strong> Bevat geschat $2 \times 10^{12}$ melkwegstelsels.",
-          "<strong>Kosmische Achtergrondstraling (CMB):</strong> De 'echo' van de Oerknal, uitgezonden toen het heelal 380.000 jaar oud was.",
-          "<strong>Uitdijend Heelal:</strong> Volgens de Wet van Hubble-Lemaître bewegen verre stelsels sneller van ons vandaan."
-        ]
+        sizePx: 210,
+        diameterHuman: "93 miljard lichtjaar",
+        sciNotation: "8,8 × 10²⁶ m",
+        lightTravelTime: "93 miljard jaar",
+        comparison: "930.000× groter dan de Melkweg.",
+        description: "De verste grens van de ruimte die we vanaf Aarde kunnen waarnemen."
       }
     ];
 
-    function switchLevel(idx) {
-      const lvl = levelsList[idx];
+    const slider = document.getElementById('scaleSlider');
+    const circle = document.getElementById('cosmicCircle');
+    const circleLabel = document.getElementById('circleLabel');
+    const statDisplay = document.getElementById('statDisplay');
+    const ticks = document.querySelectorAll('.slider-tick-item');
 
-      for (let i = 0; i < 4; i++) {
-        const btn = document.getElementById(`lvl-tab-${i}`);
-        if (i === idx) {
-          btn.className = "glass-card p-5 rounded-2xl text-left border-2 border-cosmic-cyan bg-cosmic-cyan/10 transition-all flex flex-col justify-between h-32 group opacity-100 scale-102";
-        } else {
-          btn.className = "glass-card p-5 rounded-2xl text-left border border-white/10 opacity-70 hover:opacity-100 transition-all flex flex-col justify-between h-32 group";
-        }
-      }
+    function updateScaleView(index) {
+      const data = cosmicData[index];
 
-      const display = document.getElementById('level-display-box');
-      display.innerHTML = `
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-          <div class="lg:col-span-8 space-y-5">
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider" style="background:${lvl.badgeBg}; color:${lvl.color}; border:1px solid ${lvl.color}40;">
-              <i class="fa-solid ${lvl.icon}"></i> ${lvl.subtitle}
-            </div>
-
-            <h3 class="font-heading font-bold text-3xl sm:text-4xl text-white">${lvl.title}</h3>
-
-            <p class="text-slate-300 text-sm sm:text-base leading-relaxed font-light">${lvl.description}</p>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-              <div class="p-3 rounded-xl bg-white/5 border border-white/10">
-                <span class="text-xs text-slate-400 block uppercase font-bold">Afmeting / Diameter</span>
-                <span class="font-heading font-bold text-sm sm:text-base text-white block mt-1">${lvl.diameter}</span>
-              </div>
-              <div class="p-3 rounded-xl bg-white/5 border border-white/10">
-                <span class="text-xs text-slate-400 block uppercase font-bold">Lichtreistijd</span>
-                <span class="font-heading font-bold text-sm sm:text-base text-white block mt-1">${lvl.lightTime}</span>
-              </div>
-              <div class="p-3 rounded-xl bg-white/5 border border-white/10">
-                <span class="text-xs text-slate-400 block uppercase font-bold">Voorkeurs-Eenheid</span>
-                <span class="font-heading font-bold text-sm sm:text-base text-white block mt-1">${lvl.unit}</span>
-              </div>
-              <div class="p-3 rounded-xl bg-white/5 border border-white/10">
-                <span class="text-xs text-slate-400 block uppercase font-bold">Dominante Kracht</span>
-                <span class="font-heading font-bold text-sm sm:text-base text-white block mt-1">${lvl.gravity}</span>
-              </div>
-            </div>
-
-            <div class="space-y-2 pt-2">
-              <h4 class="text-xs font-bold uppercase tracking-widest text-slate-400">VWO-2 Kernpunten:</h4>
-              <ul class="space-y-2">
-                ${lvl.points.map(pt => `
-                  <li class="flex items-start gap-2 text-slate-200 text-xs sm:text-sm">
-                    <i class="fa-solid fa-angle-right text-cosmic-cyan mt-1"></i>
-                    <span>${pt}</span>
-                  </li>
-                `).join('')}
-              </ul>
-            </div>
-          </div>
-
-          <div class="lg:col-span-4 flex flex-col items-center justify-center p-8 bg-gradient-to-b from-cosmic-900 to-cosmic-950 rounded-2xl border border-white/10 text-center">
-            <div class="w-40 h-40 rounded-full flex items-center justify-center mb-4 relative shadow-2xl" style="background: radial-gradient(circle, ${lvl.color}30 0%, rgba(11,17,25,0.9) 70%); border:2px solid ${lvl.color}">
-              <i class="fa-solid ${lvl.icon} text-6xl" style="color:${lvl.color}"></i>
-            </div>
-            <span class="text-xs text-slate-400 block">VWO Schaal visualisatie</span>
-            <span class="font-heading font-bold text-white text-sm mt-1">${lvl.title}</span>
-          </div>
-        </div>
-      `;
-    }
-
-    switchLevel(0);
-
-    /* ========================================================
-       5. RELATIVE SCALE CALCULATOR ENGINE
-       ======================================================== */
-    const presetsCalc = [
-      { name: "Knikker", diameterMeters: 0.01 },
-      { name: "Tafeltennisbal", diameterMeters: 0.04 },
-      { name: "Voetbal", diameterMeters: 0.22 },
-      { name: "Heteluchtballon", diameterMeters: 20.0 }
-    ];
-
-    const EARTH_DIAM_KM = 12742;
-    const AU_KM = 149597870;
-    const MW_KM = 100000 * 9460730472580.8;
-    const UNI_KM = 93000000000 * 9460730472580.8;
-
-    function setCalcPreset(idx) {
-      const preset = presetsCalc[idx];
-
-      const btns = document.querySelectorAll('.calc-preset-btn');
-      btns.forEach((b, i) => {
-        if (i === idx) {
-          b.className = "calc-preset-btn p-4 rounded-xl border-2 border-cosmic-cyan bg-cosmic-cyan/10 text-left transition-all";
-        } else {
-          b.className = "calc-preset-btn p-4 rounded-xl border border-white/10 bg-white/5 text-left transition-all";
-        }
+      // Update Ticks visual
+      ticks.forEach((t, i) => {
+        if(i == index) t.classList.add('active');
+        else t.classList.remove('active');
       });
 
-      const scale = preset.diameterMeters / (EARTH_DIAM_KM * 1000);
+      // Render Circle
+      circle.style.width = `${data.sizePx}px`;
+      circle.style.height = `${data.sizePx}px`;
+      circle.style.backgroundColor = data.color;
+      circle.style.boxShadow = `0 0 35px ${data.color}`;
+      circleLabel.innerText = data.name;
 
-      // Sun distance (1 AU)
-      const sunMeters = (AU_KM * 1000) * scale;
-      const sunVal = document.getElementById('calc-sun-val');
-      const sunDesc = document.getElementById('calc-sun-desc');
-      if (sunMeters < 1000) {
-        sunVal.innerText = `${sunMeters.toFixed(1)} meter`;
-        sunDesc.innerText = `Ongeveer ${(sunMeters / 100).toFixed(1)}x de lengte van een voetbalveld.`;
-      } else {
-        const km = sunMeters / 1000;
-        sunVal.innerText = `${km.toFixed(1)} km`;
-        sunDesc.innerText = `Dat is hemelsbreed van Utrecht naar ${km > 150 ? 'Groningen' : 'Amsterdam'}.`;
-      }
-
-      // Milky Way
-      const mwKmScaled = ((MW_KM * 1000) * scale) / 1000;
-      const mwVal = document.getElementById('calc-mw-val');
-      const mwDesc = document.getElementById('calc-mw-desc');
-      if (mwKmScaled < 1e6) {
-        mwVal.innerText = `${Math.round(mwKmScaled).toLocaleString('nl-NL')} km`;
-        mwDesc.innerText = `${(mwKmScaled / 384400).toFixed(1)}x de afstand van de Aarde naar de Maan!`;
-      } else {
-        mwVal.innerText = `${(mwKmScaled / 1e6).toFixed(1)} Miljoen km`;
-        mwDesc.innerText = `Nog steeds groter dan de werkelijke afstand tot de Zon!`;
-      }
-
-      // Universe
-      const uniKmScaled = ((UNI_KM * 1000) * scale) / 1000;
-      const uniVal = document.getElementById('calc-uni-val');
-      const uniDesc = document.getElementById('calc-uni-desc');
-      uniVal.innerText = `${(uniKmScaled / 1e9).toFixed(1)} Miljard km`;
-      uniDesc.innerText = `Zelfs als de Aarde 1 cm is, beslaat het heelal ons hele zonnestelsel!`;
+      // Render Stats
+      statDisplay.innerHTML = `
+        <div class="stat-card">
+          <div class="lbl">Diameter (Menselijke Schaal)</div>
+          <div class="val">${data.diameterHuman}</div>
+        </div>
+        <div class="stat-card">
+          <div class="lbl">Wetenschappelijke Notatie</div>
+          <div class="val math-highlight">${data.sciNotation}</div>
+        </div>
+        <div class="stat-card">
+          <div class="lbl">Lichtreistijd (Diameter)</div>
+          <div class="val">${data.lightTravelTime}</div>
+        </div>
+        <div class="stat-card">
+          <div class="lbl">Verhouding Schaalstap</div>
+          <div class="val" style="color:var(--accent-gold); font-size:1rem;">${data.comparison}</div>
+        </div>
+        <div class="stat-card" style="grid-column: 1 / -1;">
+          <div class="lbl">Beschrijving</div>
+          <p style="margin:0; font-size:0.95rem; color:#cbd5e1;">${data.description}</p>
+        </div>
+      `;
     }
 
-    setCalcPreset(0);
+    function setSlider(val) {
+      slider.value = val;
+      updateScaleView(val);
+    }
 
-    /* ========================================================
-       6. VWO 2 SCIENTIFIC QUIZ ENGINE
-       ======================================================== */
-    const quizData = [
+    slider.addEventListener('input', (e) => updateScaleView(e.target.value));
+    updateScaleView(0);
+
+    /* ===================================================
+       3. RELATIVE SCALE CALCULATOR LOGIC
+       =================================================== */
+    const earthInput = document.getElementById('calcEarthSize');
+    const unitSelect = document.getElementById('calcUnit');
+    const resultsGrid = document.getElementById('calcResultsGrid');
+
+    function calculateRelativeScales() {
+      let val = parseFloat(earthInput.value) || 1;
+      const unit = unitSelect.value;
+
+      // Convert value to meters for calculation base
+      let earthInMeters = val / 100; // default cm
+      if (unit === 'mm') earthInMeters = val / 1000;
+      if (unit === 'm') earthInMeters = val;
+
+      // Scale Factors relative to Earth's Diameter (1.2742e7 m)
+      const sunSysFactor = 1.5e15 / 1.2742e7;
+      const milkyWayFactor = 9.5e20 / 1.2742e7;
+      const universeFactor = 8.8e26 / 1.2742e7;
+
+      const scaledSunSysMeters = earthInMeters * sunSysFactor;
+      const scaledMilkyWayMeters = earthInMeters * milkyWayFactor;
+      const scaledUniverseMeters = earthInMeters * universeFactor;
+
+      resultsGrid.innerHTML = `
+        <div class="calc-out-box">
+          <h4>Zonnestelsel wordt:</h4>
+          <div class="calc-value">${(scaledSunSysMeters / 1000).toLocaleString('nl-NL', {maximumFractionDigits: 1})} km</div>
+          <div class="calc-analogy">💡 Ongeveer ${(scaledSunSysMeters / 1000 / 40075).toFixed(1)}× de omtrek van de Aarde!</div>
+        </div>
+
+        <div class="calc-out-box">
+          <h4>De Melkweg wordt:</h4>
+          <div class="calc-value">${(scaledMilkyWayMeters / 1.496e11).toLocaleString('nl-NL', {maximumFractionDigits: 1})} AE</div>
+          <div class="calc-analogy">💡 Dat is ${(scaledMilkyWayMeters / 1000).toExponential(2)} km in jouw schaalmodel.</div>
+        </div>
+
+        <div class="calc-out-box">
+          <h4>Waarneembaar Heelal wordt:</h4>
+          <div class="calc-value">${(scaledUniverseMeters / 9.461e15).toLocaleString('nl-NL', {maximumFractionDigits: 1})} Lichtjaar</div>
+          <div class="calc-analogy">💡 Zelfs als schaalmodel past dit niet meer binnen ons zonnestelsel!</div>
+        </div>
+      `;
+    }
+
+    earthInput.addEventListener('input', calculateRelativeScales);
+    unitSelect.addEventListener('change', calculateRelativeScales);
+    calculateRelativeScales();
+
+    /* ===================================================
+       4. QUIZ LOGIC & DIPLOMA GENERATOR
+       =================================================== */
+    const quizQuestions = [
       {
-        q: "Hoe schrijf je de diameter van de Aarde (12.742 km) in correcte wetenschappelijke notatie in meters?",
-        options: [
-          "12,742 × 10³ m",
-          "1,2742 × 10⁷ m",
-          "1,2742 × 10⁶ m",
-          "0,12742 × 10⁸ m"
-        ],
+        q: "1. Hoe schrijf je de diameter van de Aarde (12.742.000 meter) in de officiële wetenschappelijke notatie?",
+        opts: ["A) 12,742 × 10⁶ m", "B) 1,2742 × 10⁷ m", "C) 0,12742 × 10⁸ m"],
         correct: 1,
-        exp: "12.742 km = 12.742.000 meter = 1,2742 × 10⁷ m (het getal voor de macht moet tussen 1 en 10 liggen)."
+        exp: "Correct! In de wetenschappelijke notatie staat er altijd precies één cijfer (ongelijk aan nul) voor de komma: 1,2742 × 10⁷ m."
       },
       {
-        q: "Waarom gebruiken astronomen de Astronomische Eenheid (AE) in plaats van kilometers voor ons zonnestelsel?",
-        options: [
-          "Omdat kilometers alleen op de Aarde geldig zijn.",
-          "Omdat afstanden in km te grote onhandige getallen worden.",
-          "Omdat de snelheid van het licht verandert in de ruimte.",
-          "Omdat 1 AE exact gelijk is aan 1 lichtjaar."
-        ],
-        correct: 1,
-        exp: "1 AE is 149.600.000 km. Het rekent veel eenvoudiger om te zeggen dat Jupiter op 5,2 AE staat dan op 778.000.000 km."
-      },
-      {
-        q: "Wat meet een 'Lichtjaar' precies?",
-        options: [
-          "De tijd die de Aarde nodig heeft om om de Zon te draaien.",
-          "De lichtintensiteit van een heldere ster.",
-          "De afstand die licht aflegt in één jaar vacuüm.",
-          "De ouderdom van een sterrenstelsel."
-        ],
+        q: "2. Wat is de definitie van 1 Astronomische Eenheid (AE)?",
+        opts: ["A) De afstand van de Aarde tot de Maan", "B) De afstand die licht aflegt in 1 seconde", "C) De gemiddelde afstand van de Aarde tot de Zon"],
         correct: 2,
-        exp: "Een lichtjaar is een maat voor AFSTAND, niet voor tijd! Het is gelijk aan ongeveer 9,46 biljoen km."
+        exp: "Klopt! 1 AE is gelijk aan ongeveer 149,6 miljoen kilometer (1,496 × 10¹¹ m)."
       },
       {
-        q: "Welke natuurkracht vormt de primaire 'lijm' die planeten om de Zon en sterren in de Melkweg houdt?",
-        options: [
-          "Elektromagnetische kracht",
-          "Zwaartekracht (Gravitatie)",
-          "Kernkracht",
-          "Centrifugaalkracht"
-        ],
-        correct: 1,
-        exp: "Zwaartekracht werkt op grote afstanden en trekt alle massa's naar elkaar toe."
+        q: "3. Waarom gebruiken astronomen 'Lichtjaren' voor afstanden tot andere sterren in plaats van kilometers?",
+        opts: ["A) Omdat kilometers onhandelbaar grote getallen opleveren met tientallen nullen", "B) Omdat de snelheid van het licht verandert in het heelal", "C) Omdat een lichtjaar een eenheid van tijd is, geen afstand"],
+        correct: 0,
+        exp: "Uitstekend! Een lichtjaar is een afstandseenheid. Het voorkomt dat we met getallen van meer dan 20 cijfers moeten rekenen."
       },
       {
-        q: "Waarom is de diameter van het waarneembare heelal 93 miljard lichtjaar, terwijl het heelal pas 13,8 miljard jaar oud is?",
-        options: [
-          "Licht ging vroeger sneller dan nu.",
-          "De ruimte zelf zet sinds de Oerknal continu uit.",
-          "Omdat astronomen verkeerd hebben geteld.",
-          "Omdat het heelal twee kanten op draait."
-        ],
+        q: "4. Hoe verhoudt de diameter van de Melkweg zich ongeveer tot ons Zonnestelsel?",
+        opts: ["A) De Melkweg is ca. 100 keer groter", "B) De Melkweg is ca. 630.000 keer groter", "C) De Melkweg is ca. 10 miljard keer groter"],
         correct: 1,
-        exp: "Vanwege de kosmische expansie (uitdijing van de ruimte) bevindt materie die 13,8 miljard jaar geleden licht uitzond zich nu op 46,5 miljard Lj afstand van ons in elke richting."
+        exp: "Juist! Ons zonnestelsel (1,5 × 10¹⁵ m) past ruim 630.000 keer in de diameter van de Melkweg (9,5 × 10²⁰ m)."
+      },
+      {
+        q: "5. Waarom is het waarneembare heelal begrensd tot 93 miljard lichtjaar?",
+        opts: ["A) Omdat er daarbuiten fysiek geen ruimtetijd meer bestaat", "B) Omdat telescopen simpelweg niet meer stroom hebben", "C) Omdat licht van verder gelegen punten ons nog niet heeft kunnen bereiken door de leeftijd van het heelal"],
+        correct: 2,
+        exp: "Perfect! Het heelal is 13,8 miljard jaar oud. Licht van verder weg heeft door de expansie van de ruimte onze telescopen nog niet bereikt."
       }
     ];
 
-    let currentQ = 0;
-    let quizScore = 0;
-    let answeredQ = false;
+    let userAnswers = {};
 
     function renderQuiz() {
-      const q = quizData[currentQ];
-      const box = document.getElementById('quiz-box');
+      const qContainer = document.getElementById('quizBox');
+      qContainer.innerHTML = '';
 
-      box.innerHTML = `
-        <div class="space-y-6">
-          <div class="flex justify-between items-center text-xs text-slate-400 border-b border-white/10 pb-3">
-            <span>VWO Vraag ${currentQ + 1} van ${quizData.length}</span>
-            <span>Score: ${quizScore} / ${quizData.length}</span>
-          </div>
-
-          <h3 class="font-heading font-bold text-lg sm:text-xl text-white">${q.q}</h3>
-
-          <div class="grid grid-cols-1 gap-3">
-            ${q.options.map((opt, i) => `
-              <button onclick="checkQuizAns(${i})" id="q-opt-${i}" class="w-full text-left p-4 rounded-xl glass-card hover:bg-white/10 border border-white/10 transition-all font-medium text-slate-200 flex items-center justify-between text-xs sm:text-sm">
-                <span>${opt}</span>
-                <i class="fa-regular fa-circle text-slate-500"></i>
-              </button>
-            `).join('')}
-          </div>
-
-          <div id="quiz-feedback" class="hidden p-4 rounded-xl text-xs sm:text-sm"></div>
-
-          <div class="flex justify-end pt-2">
-            <button id="next-q-btn" onclick="nextQuizQ()" class="hidden px-6 py-3 rounded-full bg-cosmic-cyan text-cosmic-950 font-bold hover:bg-cyan-300 transition-all text-xs sm:text-sm">
-              ${currentQ === quizData.length - 1 ? 'Bekijk VWO Beoordeling' : 'Volgende Vraag'} <i class="fa-solid fa-arrow-right ml-1"></i>
+      quizQuestions.forEach((qObj, idx) => {
+        const card = document.createElement('div');
+        card.className = 'question-card';
+        
+        let optionsHTML = '';
+        qObj.opts.forEach((opt, oIdx) => {
+          optionsHTML += `
+            <button class="quiz-btn" id="q_${idx}_btn_${oIdx}" onclick="answerQuestion(${idx}, ${oIdx})">
+              ${opt}
             </button>
-          </div>
-        </div>
-      `;
-      answeredQ = false;
+          `;
+        });
+
+        card.innerHTML = `
+          <h4>${qObj.q}</h4>
+          <div class="quiz-options">${optionsHTML}</div>
+          <div class="explanation-box" id="exp_${idx}"></div>
+        `;
+        qContainer.appendChild(card);
+      });
     }
 
-    function checkQuizAns(idx) {
-      if (answeredQ) return;
-      answeredQ = true;
+    function answerQuestion(qIdx, optIdx) {
+      if (userAnswers[qIdx] !== undefined) return; // Prevent re-answering
+      userAnswers[qIdx] = optIdx;
 
-      const q = quizData[currentQ];
-      const fb = document.getElementById('quiz-feedback');
-      const nextBtn = document.getElementById('next-q-btn');
+      const qData = quizQuestions[qIdx];
+      const expBox = document.getElementById(`exp_${qIdx}`);
+      expBox.style.display = 'block';
 
-      for (let i = 0; i < q.options.length; i++) {
-        const btn = document.getElementById(`q-opt-${i}`);
-        btn.disabled = true;
-        if (i === q.correct) {
-          btn.className = "w-full text-left p-4 rounded-xl bg-emerald-500/20 border border-emerald-500 text-emerald-300 font-medium flex items-center justify-between text-xs sm:text-sm";
-        } else if (i === idx) {
-          btn.className = "w-full text-left p-4 rounded-xl bg-rose-500/20 border border-rose-500 text-rose-300 font-medium flex items-center justify-between text-xs sm:text-sm";
+      if (optIdx === qData.correct) {
+        document.getElementById(`q_${qIdx}_btn_${optIdx}`).classList.add('correct');
+        expBox.innerHTML = `<span style="color:#4ade80; font-weight:bold;">Correct!</span> ${qData.exp}`;
+      } else {
+        document.getElementById(`q_${qIdx}_btn_${optIdx}`).classList.add('incorrect');
+        document.getElementById(`q_${qIdx}_btn_${qData.correct}`).classList.add('correct');
+        expBox.innerHTML = `<span style="color:#f87171; font-weight:bold;">Helaas!</span> ${qData.exp}`;
+      }
+
+      // Update Tracker
+      const count = Object.keys(userAnswers).length;
+      document.getElementById('scoreTracker').innerText = `${count} van de 5 vragen beantwoord`;
+
+      if (count === 5) {
+        let allCorrect = true;
+        quizQuestions.forEach((q, i) => {
+          if (userAnswers[i] !== q.correct) allCorrect = false;
+        });
+
+        const certBtn = document.getElementById('certBtn');
+        if (allCorrect) {
+          certBtn.disabled = false;
+          certBtn.style.opacity = '1';
+          certBtn.style.cursor = 'pointer';
+        } else {
+          document.getElementById('scoreTracker').innerText += " (Herlaad de pagina om opnieuw te proberen voor 100%)";
         }
       }
-
-      fb.classList.remove('hidden');
-      if (idx === q.correct) {
-        quizScore++;
-        fb.className = "p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs sm:text-sm";
-        fb.innerHTML = `<strong><i class="fa-solid fa-check-circle"></i> Uitstekend!</strong> ${q.exp}`;
-      } else {
-        fb.className = "p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs sm:text-sm";
-        fb.innerHTML = `<strong><i class="fa-solid fa-times-circle"></i> Helaas!</strong> ${q.exp}`;
-      }
-
-      nextBtn.classList.remove('hidden');
     }
 
-    function nextQuizQ() {
-      currentQ++;
-      if (currentQ < quizData.length) {
-        renderQuiz();
-      } else {
-        renderQuizEnd();
-      }
-    }
-
-    function renderQuizEnd() {
-      const box = document.getElementById('quiz-box');
-      const pct = Math.round((quizScore / quizData.length) * 100);
-
-      box.innerHTML = `
-        <div class="text-center space-y-6 py-6">
-          <div class="w-20 h-20 rounded-full bg-cosmic-cyan/10 border-2 border-cosmic-cyan flex items-center justify-center mx-auto text-3xl text-cosmic-cyan">
-            <i class="fa-solid fa-award"></i>
-          </div>
-
-          <h3 class="font-heading font-bold text-2xl text-white">VWO Resultaat: ${pct}%</h3>
-
-          <p class="text-slate-300 text-sm max-w-md mx-auto">
-            Je hebt <strong>${quizScore}</strong> van de <strong>${quizData.length}</strong> vragen goed beantwoord. ${pct >= 80 ? 'Gefeliciteerd! Je beheerst de kosmische schaalniveaus op vwo-niveau uitstekend.' : 'Goed geprobeerd! Neem het onderzoekskader nog eens door voor de spreekbeurt.'}
-          </p>
-
-          <button onclick="resetQuiz()" class="px-6 py-3 rounded-full bg-cosmic-cyan text-cosmic-950 font-bold hover:bg-cyan-300 transition-all text-sm">
-            <i class="fa-solid fa-rotate-right"></i> Quiz Opnieuw Maken
-          </button>
-        </div>
-      `;
-    }
-
-    function resetQuiz() {
-      currentQ = 0;
-      quizScore = 0;
-      renderQuiz();
+    function generateCertificate() {
+      const dip = document.getElementById('diplomaCard');
+      document.getElementById('certDate').innerText = new Date().toLocaleDateString('nl-NL');
+      dip.style.display = 'block';
+      dip.scrollIntoView({ behavior: 'smooth' });
     }
 
     renderQuiz();
+
+    /* ===================================================
+       5. PRESENTATION TIMER LOGIC
+       =================================================== */
+    let timerInterval = null;
+    let totalSeconds = 180; // 3 minutes
+
+    function updateTimerClock() {
+      const mins = Math.floor(totalSeconds / 60);
+      const secs = totalSeconds % 60;
+      document.getElementById('timerClock').innerText = 
+        `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    function startTimer() {
+      if (timerInterval) return;
+      timerInterval = setInterval(() => {
+        if (totalSeconds > 0) {
+          totalSeconds--;
+          updateTimerClock();
+        } else {
+          pauseTimer();
+          alert('Tijd is om! Sluit je Brainsport presentatie af met een krachtige conclusie.');
+        }
+      }, 1000);
+    }
+
+    function pauseTimer() {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+
+    function resetTimer() {
+      pauseTimer();
+      totalSeconds = 180;
+      updateTimerClock();
+    }
   </script>
 </body>
 </html>
