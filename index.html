@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>De Schaal van het Heelal - Brainsport VWO 2</title>
+  <style>
+    :root {
+      --bg-dark: #050811;
+      --card-bg: rgba(15, 23, 42, 0.88);
+      --accent-blue: #38bdf8;
+      --accent-purple: #c084fc;
+      --accent-gold: #f59e0b;
+      --accent-green: #34d399;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --border: #1e293b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding-bottom: 60px;
+      overflow-x: hidden;
+    }
+
+    #spaceCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    header {
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.95));
+      backdrop-filter: blur(12px);
+      padding: 45px 20px;
+      text-align: center;
+      border-bottom: 2px solid #334155;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    }
+
+    .badge {
+      display: inline-block;
+      background: linear-gradient(90deg, var(--accent-purple), var(--accent-blue));
+      color: #fff;
+      font-size: 0.85rem;
+      font-weight: 700;
+      padding: 6px 18px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 15px;
+    }
+
+    h1 {
+      font-size: 3rem;
+      margin-bottom: 10px;
+      background: linear-gradient(90deg, #38bdf8, #818cf8, #c084fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 1.15rem;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .container {
+      max-width: 1150px;
+      margin: 35px auto;
+      padding: 0 20px;
+    }
+
+    .card {
+      background-color: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+      margin-bottom: 35px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    h2 {
+      font-size: 1.8rem;
+      color: var(--accent-blue);
+      margin-bottom: 18px;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    p {
+      margin-bottom: 15px;
+      color: #d1d5db;
+      font-size: 1.05rem;
+    }
+
+    .sci {
+      font-family: 'Courier New', Courier, monospace;
+      color: var(--accent-gold);
+      font-weight: bold;
+    }
+
+    /* 3D Visualizer Box */
+    .visualizer-box {
+      width: 100%;
+      height: 380px;
+      background: #02040a;
+      border-radius: 12px;
+      border: 1px solid #1e293b;
+      margin-top: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #structureCanvas {
+      width: 100%;
+      height: 100%;
+    }
+
+    .visualizer-overlay {
+      position: absolute;
+      bottom: 15px;
+      left: 15px;
+      background: rgba(15, 23, 42, 0.85);
+      padding: 10px 16px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      font-size: 0.9rem;
+      color: var(--accent-blue);
+    }
+
+    /* Zoom Slider Engine */
+    .zoom-engine {
+      background: rgba(10, 16, 30, 0.9);
+      padding: 28px;
+      border-radius: 14px;
+      border: 1px solid #1e293b;
+      margin-top: 20px;
+    }
+
+    input[type=range] {
+      width: 100%;
+      height: 12px;
+      border-radius: 6px;
+      background: #1e293b;
+      outline: none;
+      accent-color: var(--accent-blue);
+      cursor: pointer;
+    }
+
+    .zoom-labels {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 5px;
+      margin-top: 15px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .display-box {
+      margin-top: 25px;
+      background: #02050e;
+      border-left: 5px solid var(--accent-blue);
+      padding: 24px;
+      border-radius: 0 12px 12px 0;
+    }
+
+    .display-box h3 {
+      font-size: 1.8rem;
+      color: var(--accent-blue);
+      margin-bottom: 10px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+
+    .stat-card {
+      background: #0f172a;
+      padding: 16px;
+      border-radius: 10px;
+      border: 1px solid #1e293b;
+    }
+
+    .stat-card .label {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .stat-card .value {
+      font-size: 1.25rem;
+      font-weight: bold;
+      color: var(--text-main);
+      margin-top: 4px;
+    }
+
+    /* Converter Grid */
+    .converter-box {
+      background: rgba(10, 16, 30, 0.9);
+      padding: 25px;
+      border-radius: 14px;
+      border: 1px solid #1e293b;
+      margin-top: 20px;
+    }
+
+    .calc-row {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    input[type=number], select {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: white;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 1.05rem;
+      font-weight: bold;
+    }
+
+    select {
+      cursor: pointer;
+    }
+
+    @media (max-width: 768px) {
+      h1 { font-size: 2.2rem; }
+      .zoom-labels { font-size: 0.65rem; }
+      .container { padding: 0 15px; }
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="spaceCanvas"></canvas>
+
+  <header>
+    <div class="badge">Brainsport — VWO 2 Project</div>
+    <h1>De Schaal van het Heelal</h1>
+    <p class="subtitle">
+      Van de Aarde (1,27 × 10⁷ m) tot de kosmische grens van het Waarneembare Heelal (8,8 × 10²⁶ m). 
+      Een diepgaande verkenning van de absolute grootte en structuren van de kosmos.
+    </p>
+  </header>
+
+  <div class="container">
+
+    <!-- 1. Interactieve Zoom Engine -->
+    <section class="card">
+      <h2>1. Kosmische Zoom Explorer (7 Sphares van de Kosmos)</h2>
+      <p>Sleep de schuifbalk om stapsgewijs uit te zoomen van onze thuisplaneet tot aan de horizon van het waarneembare heelal:</p>
+
+      <div class="zoom-engine">
+        <input type="range" id="zoomRange" min="0" max="6" step="1" value="0">
+        <div class="zoom-labels">
+          <span>1. Aarde</span>
+          <span>2. Zonnestelsel</span>
+          <span>3. Oortwolk</span>
+          <span>4. Melkweg</span>
+          <span>5. Lokale Groep</span>
+          <span>6. Laniakea</span>
+          <span>7. Heelal</span>
+        </div>
+
+        <div class="display-box" id="zoomDisplay"></div>
+      </div>
+    </section>
+
+    <!-- 2. Dynamische Structurele Visualisator -->
+    <section class="card">
+      <h2>2. Live Kosmische Structuur Visualisator</h2>
+      <p>Bekijk de grafische weergave van het geselecteerde kosmische niveau:</p>
+      
+      <div class="visualizer-box">
+        <canvas id="structureCanvas"></canvas>
+        <div class="visualizer-overlay" id="visualizerTitle">Modus: Aarde (Planeet)</div>
+      </div>
+    </section>
+
+    <!-- 3. Relatieve Schaal Calculator -->
+    <section class="card">
+      <h2>3. Relatieve Schaal Calculator (Analogie Generator)</h2>
+      <p>Als we de Aarde verkleinen tot een alledaags voorwerp, hoe groot worden de kosmische structuren daarboven dan?</p>
+
+      <div class="converter-box">
+        <div class="calc-row">
+          <label for="baseSize">Stel de Aarde is een object van:</label>
+          <input type="number" id="baseSize" value="1" min="0.1" step="0.1">
+          <select id="baseUnit">
+            <option value="0.001">millimeter (mm) - [Zandkorrel]</option>
+            <option value="0.01" selected>centimeter (cm) - [Knikker]</option>
+            <option value="0.2">20 cm - [Voetbal]</option>
+          </select>
+        </div>
+
+        <div class="grid-3" id="analogueResults"></div>
+      </div>
+    </section>
+
+    <!-- 4. Eenheden Omrekenaar -->
+    <section class="card">
+      <h2>4. Astronomische Eenheden Omrekenaar</h2>
+      <p>Reken afstanden om tussen meters, Astronomische Eenheden (AE), Lichtjaren (lj) en Parsecs (pc):</p>
+
+      <div class="converter-box">
+        <div class="calc-row">
+          <input type="number" id="convertInput" value="1" min="0">
+          <select id="unitFrom">
+            <option value="lj" selected>Lichtjaar (lj)</option>
+            <option value="ae">Astronomische Eenheid (AE)</option>
+            <option value="km">Kilometer (km)</option>
+            <option value="m">Meter (m)</option>
+          </select>
+          <span>is gelijk aan:</span>
+        </div>
+
+        <div class="grid-3" id="convertResults"></div>
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    // Achtergrond Sterrenhemel
+    const canvas = document.getElementById('spaceCanvas');
+    const ctx = canvas.getContext('2d');
+    let stars = [];
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      initStars();
+    }
+
+    function initStars() {
+      stars = [];
+      const count = Math.floor((canvas.width * canvas.height) / 3000);
+      for(let i = 0; i < count; i++) {
+        stars.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          radius: Math.random() * 1.5,
+          alpha: Math.random(),
+          speed: Math.random() * 0.01 + 0.004
+        });
+      }
+    }
+
+    function drawStars() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      stars.forEach(s => {
+        s.alpha += s.speed;
+        if(s.alpha > 1 || s.alpha < 0) s.speed = -s.speed;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 255, 255, ${Math.abs(s.alpha)})`;
+        ctx.fill();
+      });
+      requestAnimationFrame(drawStars);
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    drawStars();
+
+    // Data van de 7 Kosmische Niveaus
+    const cosmicLevels = [
+      {
+        name: "1. De Aarde",
+        diameter: "12.742 km",
+        sci: "1,27 × 10⁷ m",
+        lightTime: "0,042 seconden (Licht rondom Aarde)",
+        desc: "Onze thuisplaneet. Een rotsplaneet in de leefbare zone van de Zon met een stikstof-zuurstofatmosfeer en een actief magnetisch veld.",
+        facts: "Massa: 5,97 × 10²⁴ kg. De mensheid bevindt zich volledig op de dunne korst van dit kosmische eiland."
+      },
+      {
+        name: "2. Het Zonnestelsel (Planetaire Zone)",
+        diameter: "9 miljard km (tot Neptune/Pluto)",
+        sci: "9,0 × 10¹² m",
+        lightTime: "ca. 8,3 uur (Licht naar Neptune)",
+        desc: "De Zon met de 8 planeten, hun manen en de Kuipergordel. Beheerst door de centrale massa van de Zon (99,86% van alle massa in het stelsel).",
+        facts: "De Aarde staat op 1 AE (149,6 miljoen km) van de Zon. Licht van de Zon doet er 8 minuten en 20 seconden over om ons te bereiken."
+      },
+      {
+        name: "3. De Oortwolk (Buitenste Zonnestelsel)",
+        diameter: "≈ 100.000 AE (1,58 Lichtjaar)",
+        sci: "1,5 × 10¹⁵ m",
+        lightTime: "1,58 jaar",
+        desc: "Een reusachtige bolvormige wolk van ijzige kometen en rotsblokken die de uiterste grens vormt van de zwaartekrachtsinvloed van de Zon.",
+        facts: "Hier vandaan komen langperiodieke kometen. De dichtstbijzijnde andere ster, Proxima Centauri, staat op 4,24 lichtjaar."
+      },
+      {
+        name: "4. De Melkweg",
+        diameter: "100.000 lichtjaar",
+        sci: "9,5 × 10²⁰ m",
+        lightTime: "100.000 jaar",
+        desc: "Ons spiraalvormig sterrenstelsel met 100 tot 400 miljard sterren. Het stelsel heeft een centrale verdikking met een superzwaar zwart gat (Sagittarius A*).",
+        facts: "Ons Zonnestelsel bevindt zich in de Orionarm op ongeveer 27.000 lichtjaar van het galactische centrum."
+      },
+      {
+        name: "5. De Lokale Groep",
+        diameter: "10 miljoen lichtjaar",
+        sci: "9,5 × 10²² m",
+        lightTime: "10,000.000 jaar",
+        desc: "De trossen van sterrenstelsels waartoe de Melkweg behoort, samen met het Andromedastelsel (M31), de Driehoeknevel (M33) en ruim 50 dwergstelsels.",
+        facts: "De Melkweg en Andromeda bewegen met 110 km/s naar elkaar toe en zullen over ca. 4,5 miljard jaar samensmelten."
+      },
+      {
+        name: "6. Het Laniakea Supercluster",
+        diameter: "520 miljoen lichtjaar",
+        sci: "4,9 × 10²⁴ m",
+        lightTime: "520.000.000 jaar",
+        desc: "Een reusachtige stroom-structuur die meer dan 100.000 sterrenstelsels bevat, verdeeld over vele clusters waaronder de Maagdencluster (Virgo Cluster).",
+        facts: "Alle stelsels binnen Laniakea bewegen geleidelijk naar een gravitationeel centrum genaamd de 'Grote Aantrekker' (Great Attractor)."
+      },
+      {
+        name: "7. Het Waarneembare Heelal",
+        diameter: "93 miljard lichtjaar",
+        sci: "8,8 × 10²⁶ m",
+        lightTime: "46,5 miljard jaar (Radius)",
+        desc: "De totale ruimtelijke bol waarvan het licht sinds de Oerknal (13,8 miljard jaar geleden) de Aarde heeft kunnen bereiken. Bevat geschat 2.000 miljard sterrenstelsels.",
+        facts: "Door de versnelde uitdijing van de ruimte is de feitelijke straal tot de verste kosmische achtergrondstraling nu 46,5 miljard lichtjaar."
+      }
+    ];
+
+    // UI Zoom Control
+    const zoomRange = document.getElementById('zoomRange');
+    const zoomDisplay = document.getElementById('zoomDisplay');
+    const visualizerTitle = document.getElementById('visualizerTitle');
+
+    function updateZoom(index) {
+      const data = cosmicLevels[index];
+      zoomDisplay.innerHTML = `
+        <h3>${data.name}</h3>
+        <p>${data.desc}</p>
+        <div class="grid-3">
+          <div class="stat-card">
+            <div class="label">Absolute Schaal / Diameter</div>
+            <div class="value">${data.diameter}</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Wetenschappelijke Notatie</div>
+            <div class="value sci">${data.sci}</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Reistijd van Licht</div>
+            <div class="value">${data.lightTime}</div>
+          </div>
+        </div>
+        <p style="margin-top:15px; color: var(--accent-purple); font-style:italic;"><strong>Wetenschappelijk weetje:</strong> ${data.facts}</p>
+      `;
+      visualizerTitle.innerText = `Modus: ${data.name}`;
+      drawStructure(parseInt(index));
+    }
+
+    zoomRange.addEventListener('input', (e) => updateZoom(e.target.value));
+
+    // 2D Structure Canvas Engine
+    const structCanvas = document.getElementById('structureCanvas');
+    const sCtx = structCanvas.getContext('2d');
+    let animationFrame;
+    let angle = 0;
+
+    function resizeStructCanvas() {
+      structCanvas.width = structCanvas.parentElement.clientWidth;
+      structCanvas.height = structCanvas.parentElement.clientHeight;
+    }
+
+    function drawStructure(level) {
+      cancelAnimationFrame(animationFrame);
+      resizeStructCanvas();
+
+      const w = structCanvas.width;
+      const h = structCanvas.height;
+      const cx = w / 2;
+      const cy = h / 2;
+
+      function render() {
+        sCtx.clearRect(0, 0, w, h);
+        angle += 0.008;
+
+        if (level === 0) {
+          // Aarde
+          sCtx.beginPath();
+          sCtx.arc(cx, cy, 80, 0, Math.PI * 2);
+          sCtx.fillStyle = '#1d4ed8';
+          sCtx.fill();
+          sCtx.strokeStyle = '#38bdf8';
+          sCtx.lineWidth = 4;
+          sCtx.stroke();
+
+          // Sfeer
+          sCtx.beginPath();
+          sCtx.arc(cx - 20, cy - 20, 25, 0, Math.PI * 2);
+          sCtx.fillStyle = '#22c55e';
+          sCtx.fill();
+        } else if (level === 1) {
+          // Zonnestelsel
+          sCtx.beginPath();
+          sCtx.arc(cx, cy, 25, 0, Math.PI * 2);
+          sCtx.fillStyle = '#f59e0b';
+          sCtx.fill();
+
+          for (let r = 50; r <= 150; r += 25) {
+            sCtx.beginPath();
+            sCtx.arc(cx, cy, r, 0, Math.PI * 2);
+            sCtx.strokeStyle = 'rgba(255,255,255,0.15)';
+            sCtx.stroke();
+
+            let px = cx + Math.cos(angle * (200 / r)) * r;
+            let py = cy + Math.sin(angle * (200 / r)) * r;
+            sCtx.beginPath();
+            sCtx.arc(px, py, 5, 0, Math.PI * 2);
+            sCtx.fillStyle = '#38bdf8';
+            sCtx.fill();
+          }
+        } else if (level === 3) {
+          // Melkweg Spiraal
+          sCtx.save();
+          sCtx.translate(cx, cy);
+          sCtx.rotate(angle * 0.5);
+          for (let i = 0; i < 400; i++) {
+            let a = i * 0.1;
+            let r = 3 * a;
+            let x = r * Math.cos(a);
+            let y = r * Math.sin(a);
+            sCtx.beginPath();
+            sCtx.arc(x, y, Math.random() * 2, 0, Math.PI * 2);
+            sCtx.fillStyle = 'rgba(192, 132, 252, 0.8)';
+            sCtx.fill();
+
+            let x2 = -x;
+            let y2 = -y;
+            sCtx.beginPath();
+            sCtx.arc(x2, y2, Math.random() * 2, 0, Math.PI * 2);
+            sCtx.fillStyle = 'rgba(56, 189, 248, 0.8)';
+            sCtx.fill();
+          }
+          sCtx.restore();
+        } else {
+          // Kosmisch Web / Algemeen
+          for (let i = 0; i < 60; i++) {
+            let x = (Math.sin(i * 99 + angle) * 0.4 + 0.5) * w;
+            let y = (Math.cos(i * 33 + angle) * 0.4 + 0.5) * h;
+            sCtx.beginPath();
+            sCtx.arc(x, y, 3, 0, Math.PI * 2);
+            sCtx.fillStyle = '#818cf8';
+            sCtx.fill();
+          }
+        }
+
+        animationFrame = requestAnimationFrame(render);
+      }
+
+      render();
+    }
+
+    window.addEventListener('resize', () => {
+      resizeStructCanvas();
+      drawStructure(parseInt(zoomRange.value));
+    });
+
+    // Relatieve Schaal Calculator
+    const baseSize = document.getElementById('baseSize');
+    const baseUnit = document.getElementById('baseUnit');
+    const analogueResults = document.getElementById('analogueResults');
+
+    function calculateAnalogues() {
+      const val = parseFloat(baseSize.value) || 1;
+      const unitFactor = parseFloat(baseUnit.value); 
+      const earthMeters = val * unitFactor; 
+
+      const sunSysRatio = 9.0e12 / 1.27e7;
+      const oortRatio = 1.5e15 / 1.27e7;
+      const milkyWayRatio = 9.5e20 / 1.27e7;
+      const universeRatio = 8.8e26 / 1.27e7;
+
+      const sysKm = (earthMeters * sunSysRatio) / 1000;
+      const oortKm = (earthMeters * oortRatio) / 1000;
+      const mwKm = (earthMeters * milkyWayRatio) / 1000;
+      const uniKm = (earthMeters * universeRatio) / 1000;
+
+      analogueResults.innerHTML = `
+        <div class="stat-card">
+          <div class="label">Zonnestelsel wordt</div>
+          <div class="value">${sysKm < 100 ? sysKm.toFixed(2) + ' km' : Math.round(sysKm).toLocaleString() + ' km'}</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Oortwolk wordt</div>
+          <div class="value">${Math.round(oortKm).toLocaleString()} km</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Melkweg wordt</div>
+          <div class="value sci">${mwKm.toExponential(2)} km</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Waarneembaar Heelal wordt</div>
+          <div class="value sci">${uniKm.toExponential(2)} km</div>
+        </div>
+      `;
+    }
+
+    baseSize.addEventListener('input', calculateAnalogues);
+    baseUnit.addEventListener('change', calculateAnalogues);
+
+    // Eenheden Omrekenaar
+    const convertInput = document.getElementById('convertInput');
+    const unitFrom = document.getElementById('unitFrom');
+    const convertResults = document.getElementById('convertResults');
+
+    function convertUnits() {
+      const val = parseFloat(convertInput.value) || 0;
+      const unit = unitFrom.value;
+
+      let meters = 0;
+      if (unit === 'lj') meters = val * 9.461e15;
+      else if (unit === 'ae') meters = val * 1.496e11;
+      else if (unit === 'km') meters = val * 1000;
+      else meters = val;
+
+      const km = meters / 1000;
+      const ae = meters / 1.496e11;
+      const lj = meters / 9.461e15;
+      const pc = meters / 3.086e16;
+
+      convertResults.innerHTML = `
+        <div class="stat-card">
+          <div class="label">Kilometer (km)</div>
+          <div class="value sci">${km.toExponential(3)}</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Astronomische Eenheden (AE)</div>
+          <div class="value sci">${ae.toExponential(3)}</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Lichtjaren (lj)</div>
+          <div class="value sci">${lj.toExponential(3)}</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Parsec (pc)</div>
+          <div class="value sci">${pc.toExponential(3)}</div>
+        </div>
+      `;
+    }
+
+    convertInput.addEventListener('input', convertUnits);
+    unitFrom.addEventListener('change', convertUnits);
+
+    // Init
+    updateZoom(0);
+    calculateAnalogues();
+    convertUnits();
+  </script>
+</body>
+</html>
