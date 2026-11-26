@@ -1,0 +1,1677 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Van Gaswolk tot Ster — VWO 2 Sterrenkunde</title>
+  <!--
+    Bestand: sterrenvorming.html
+    Doel: Interactieve en visuele webpagina over de vorming van sterren voor VWO 2 (13-14 jaar).
+    Technologie: Pure HTML5, CSS3 en Vanilla JavaScript (werkt offline zonder server of CDN).
+    Functies:
+      - Levendige sterrenhemel op <canvas> met subtiele parallax en pauze bij offscreen / reduced-motion.
+      - 5 interactieve fasen (navigatie via scrollen, klikken of pijltjestoetsen) met fase-specifieke animatie.
+      - Spectaculair moment bij fase 4 (kernfusie: flits, gloed en deeltjes).
+      - Interactief massalab (schuifregelaar voor wolkmassa) dat invloed toont op temperatuur, ontsteking en sterklasse.
+      - Korte VWO 2 quiz met directe feedback en uitleg.
+      - Robuuste foutafhandeling bij ontbrekende DOM-elementen of browserfuncties.
+  -->
+  <style>
+    :root {
+      --bg-deep: #05060f;
+      --bg-surface: rgba(14, 18, 38, 0.78);
+      --bg-surface-strong: rgba(20, 26, 54, 0.94);
+      --text-main: #f3f5ff;
+      --text-muted: #b4bcd8;
+      --accent-purple: #9d4edd;
+      --accent-purple-glow: rgba(157, 78, 221, 0.45);
+      --accent-blue: #38bdf8;
+      --accent-blue-glow: rgba(56, 189, 248, 0.4);
+      --accent-orange: #fb923c;
+      --accent-orange-glow: rgba(251, 146, 60, 0.5);
+      --accent-gold: #fde047;
+      --border-subtle: rgba(148, 163, 216, 0.2);
+      --radius-lg: 22px;
+      --radius-md: 14px;
+      --transition-smooth: 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background-color: var(--bg-deep);
+      color: var(--text-main);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      line-height: 1.65;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    /* Achtergrond sterrenhemel canvas */
+    #starfield-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* Subtiele ruimtelijke gloedlagen op de achtergrond */
+    .ambient-nebula {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 18% 22%, rgba(157, 78, 221, 0.16), transparent 45%),
+        radial-gradient(circle at 82% 28%, rgba(56, 189, 248, 0.13), transparent 45%),
+        radial-gradient(circle at 55% 82%, rgba(251, 146, 60, 0.12), transparent 50%);
+      transform: translate3d(var(--px, 0px), var(--py, 0px), 0);
+      transition: transform 0.25s ease-out;
+    }
+
+    /* Kernfusie flits-overlay bij fase 4 */
+    .fusion-flash-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      pointer-events: none;
+      opacity: 0;
+      background: radial-gradient(circle at center, rgba(254, 249, 195, 0.92) 0%, rgba(251, 146, 60, 0.65) 35%, rgba(157, 78, 221, 0.25) 65%, transparent 100%);
+      transform: scale(0.85);
+      transition: opacity 0.22s ease-out, transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .fusion-flash-overlay.is-active {
+      opacity: 1;
+      transform: scale(1.15);
+    }
+
+    .page-shell {
+      position: relative;
+      z-index: 2;
+    }
+
+    /* Sticky fase-navigatiebalk */
+    .top-nav {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      background: rgba(7, 10, 24, 0.82);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 0.65rem 1rem;
+    }
+
+    .top-nav-inner {
+      max-width: 1140px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .brand-mark {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      font-weight: 800;
+      font-size: 0.98rem;
+      letter-spacing: 0.02em;
+      color: var(--text-main);
+      text-decoration: none;
+    }
+
+    .brand-dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple), var(--accent-orange));
+      box-shadow: 0 0 12px var(--accent-blue);
+    }
+
+    .step-pills {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding-bottom: 2px;
+    }
+
+    .step-pills::-webkit-scrollbar {
+      display: none;
+    }
+
+    .step-pill {
+      appearance: none;
+      border: 1px solid var(--border-subtle);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-muted);
+      padding: 0.38rem 0.72rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: transform 0.2s ease, background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .step-pill:hover {
+      transform: translateY(-1px);
+      color: var(--text-main);
+      border-color: rgba(56, 189, 248, 0.5);
+    }
+
+    .step-pill.is-active {
+      color: #060814;
+      background: linear-gradient(135deg, var(--accent-blue), #a78bfa, var(--accent-orange));
+      border-color: transparent;
+      box-shadow: 0 0 18px rgba(157, 78, 221, 0.45);
+    }
+
+    /* Hero / Eerste indruk */
+    .hero {
+      max-width: 1140px;
+      margin: 0 auto;
+      padding: clamp(3.2rem, 8vw, 6.2rem) 1.25rem 3rem;
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 2.25rem;
+      align-items: center;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.35rem 0.85rem;
+      border-radius: 999px;
+      background: rgba(157, 78, 221, 0.16);
+      border: 1px solid rgba(157, 78, 221, 0.45);
+      color: #e9d5ff;
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+
+    h1 {
+      font-size: clamp(2.2rem, 5.2vw, 3.8rem);
+      line-height: 1.12;
+      font-weight: 850;
+      letter-spacing: -0.02em;
+      margin-bottom: 1.1rem;
+    }
+
+    .gradient-text {
+      background: linear-gradient(95deg, var(--accent-blue) 0%, #c084fc 52%, var(--accent-orange) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .hero-lead {
+      font-size: clamp(1rem, 1.8vw, 1.18rem);
+      color: var(--text-muted);
+      max-width: 58ch;
+      margin-bottom: 1.65rem;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.85rem;
+    }
+
+    .btn-primary, .btn-secondary {
+      appearance: none;
+      border-radius: var(--radius-md);
+      padding: 0.85rem 1.35rem;
+      font-size: 0.96rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: transform 0.22s ease, box-shadow 0.25s ease, background-color 0.25s ease, border-color 0.25s ease;
+    }
+
+    .btn-primary {
+      border: none;
+      color: #060814;
+      background: linear-gradient(135deg, var(--accent-blue), #a855f7, var(--accent-orange));
+      box-shadow: 0 8px 28px rgba(157, 78, 221, 0.35);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px) scale(1.01);
+      box-shadow: 0 12px 34px rgba(56, 189, 248, 0.42);
+    }
+
+    .btn-secondary {
+      border: 1px solid var(--border-subtle);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-main);
+    }
+
+    .btn-secondary:hover {
+      transform: translateY(-2px);
+      border-color: var(--accent-blue);
+      background: rgba(56, 189, 248, 0.12);
+    }
+
+    .hero-orb-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 0.9rem;
+    }
+
+    .hero-visual {
+      width: 220px;
+      height: 220px;
+      position: relative;
+      display: grid;
+      place-items: center;
+    }
+
+    .hero-ring {
+      position: absolute;
+      inset: 8px;
+      border-radius: 50%;
+      border: 1px dashed rgba(56, 189, 248, 0.45);
+      animation: spinSlow 24s linear infinite;
+    }
+
+    .hero-core {
+      width: 118px;
+      height: 118px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 32% 30%, #fffbeb 0%, var(--accent-orange) 42%, var(--accent-purple) 82%, transparent 100%);
+      box-shadow: 0 0 42px var(--accent-orange-glow), 0 0 80px var(--accent-purple-glow);
+      animation: pulseCore 4s ease-in-out infinite;
+    }
+
+    /* Fase-secties */
+    .story-container {
+      max-width: 1140px;
+      margin: 0 auto;
+      padding: 1rem 1.25rem 4rem;
+      display: flex;
+      flex-direction: column;
+      gap: 3.5rem;
+    }
+
+    .phase-section {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: clamp(1.5rem, 4vw, 2.6rem);
+      display: grid;
+      grid-template-columns: 1fr 1.05fr;
+      gap: 2rem;
+      align-items: center;
+      box-shadow: 0 20px 55px rgba(0, 0, 0, 0.35);
+      opacity: 0;
+      transform: translateY(34px);
+      transition: opacity var(--transition-smooth), transform var(--transition-smooth), border-color 0.35s ease, box-shadow 0.35s ease;
+    }
+
+    .phase-section.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .phase-section.is-current {
+      border-color: rgba(56, 189, 248, 0.55);
+      box-shadow: 0 22px 64px rgba(15, 23, 42, 0.7), 0 0 32px rgba(157, 78, 221, 0.16);
+    }
+
+    .phase-section:nth-child(even) .phase-stage {
+      order: -1;
+    }
+
+    .phase-tag {
+      display: inline-block;
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 0.3rem 0.75rem;
+      border-radius: 999px;
+      margin-bottom: 0.7rem;
+      background: rgba(56, 189, 248, 0.14);
+      color: #7dd3fc;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+    }
+
+    .phase-title {
+      font-size: clamp(1.45rem, 3vw, 2.15rem);
+      line-height: 1.2;
+      margin-bottom: 0.85rem;
+    }
+
+    .phase-text {
+      color: var(--text-main);
+      font-size: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .glossary-box {
+      background: rgba(255, 255, 255, 0.04);
+      border-left: 3px solid var(--accent-purple);
+      border-radius: 0 var(--radius-md) var(--radius-md) 0;
+      padding: 0.8rem 1rem;
+      margin-bottom: 1rem;
+      font-size: 0.92rem;
+      color: var(--text-muted);
+    }
+
+    .glossary-box strong {
+      color: #e9d5ff;
+    }
+
+    .fact-card {
+      background: linear-gradient(135deg, rgba(251, 146, 60, 0.12), rgba(157, 78, 221, 0.12));
+      border: 1px solid rgba(251, 146, 60, 0.35);
+      border-radius: var(--radius-md);
+      padding: 0.9rem 1.05rem;
+      font-size: 0.93rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .fact-card strong {
+      color: #fed7aa;
+    }
+
+    .phase-nav-row {
+      display: flex;
+      gap: 0.65rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-step {
+      appearance: none;
+      border: 1px solid var(--border-subtle);
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-main);
+      padding: 0.55rem 0.95rem;
+      border-radius: 10px;
+      font-size: 0.86rem;
+      font-weight: 650;
+      cursor: pointer;
+      transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .btn-step:hover {
+      transform: translateY(-1px);
+      border-color: var(--accent-orange);
+      background: rgba(251, 146, 60, 0.14);
+    }
+
+    /* Animatie-podium per fase */
+    .phase-stage {
+      min-height: 290px;
+      border-radius: var(--radius-md);
+      background: radial-gradient(circle at center, rgba(30, 38, 82, 0.65), rgba(7, 10, 24, 0.92));
+      border: 1px solid rgba(148, 163, 216, 0.18);
+      position: relative;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+      padding: 1.25rem;
+    }
+
+    /* Fase 1: Koude gas- en stofwolk (nevel) */
+    .nebula-cloud {
+      width: 195px;
+      height: 155px;
+      border-radius: 58% 42% 52% 48% / 44% 56% 44% 56%;
+      background:
+        radial-gradient(circle at 30% 35%, rgba(56, 189, 248, 0.55), transparent 60%),
+        radial-gradient(circle at 72% 60%, rgba(157, 78, 221, 0.55), transparent 65%),
+        rgba(37, 45, 92, 0.65);
+      filter: blur(2px);
+      box-shadow: 0 0 45px rgba(157, 78, 221, 0.35), inset 0 0 28px rgba(56, 189, 248, 0.3);
+      animation: morphNebula 9s ease-in-out infinite;
+      transform: scale(calc(1.06 - var(--scroll-progress, 0) * 0.12));
+    }
+
+    .dust-speck {
+      position: absolute;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: rgba(224, 242, 254, 0.75);
+      animation: driftSpeck 6s ease-in-out infinite;
+    }
+
+    .dust-speck:nth-child(2) { top: 22%; left: 24%; animation-delay: -1s; }
+    .dust-speck:nth-child(3) { top: 68%; left: 28%; animation-delay: -2.5s; background: #e9d5ff; }
+    .dust-speck:nth-child(4) { top: 30%; right: 24%; animation-delay: -4s; background: #fed7aa; }
+    .dust-speck:nth-child(5) { bottom: 20%; right: 28%; animation-delay: -5.2s; }
+
+    /* Fase 2: Samentrekken, draaien en klonteren */
+    .collapse-wrapper {
+      width: 210px;
+      height: 210px;
+      position: relative;
+      display: grid;
+      place-items: center;
+      transform: rotate(calc(var(--scroll-progress, 0) * 140deg));
+      transition: transform 0.25s linear;
+    }
+
+    .collapse-ring {
+      position: absolute;
+      inset: 12px;
+      border-radius: 50%;
+      border: 2px dotted rgba(56, 189, 248, 0.6);
+      animation: spinSlow 10s linear infinite;
+    }
+
+    .clump {
+      position: absolute;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #f3e8ff, var(--accent-purple));
+      box-shadow: 0 0 16px var(--accent-purple-glow);
+      animation: pullInward 3.4s ease-in-out infinite;
+    }
+
+    .clump:nth-child(2) { top: 18px; left: 50%; transform: translateX(-50%); animation-delay: 0s; }
+    .clump:nth-child(3) { bottom: 20px; left: 32%; animation-delay: -0.8s; background: radial-gradient(circle, #e0f2fe, var(--accent-blue)); }
+    .clump:nth-child(4) { top: 46%; right: 16px; animation-delay: -1.6s; }
+    .clump:nth-child(5) { top: 44%; left: 16px; animation-delay: -2.4s; background: radial-gradient(circle, #ffedd5, var(--accent-orange)); }
+
+    /* Fase 3: Protoster */
+    .protostar-wrap {
+      position: relative;
+      width: 210px;
+      height: 210px;
+      display: grid;
+      place-items: center;
+    }
+
+    .accretion-disk {
+      position: absolute;
+      width: 205px;
+      height: 64px;
+      border-radius: 50%;
+      border: 3px solid rgba(251, 146, 60, 0.55);
+      box-shadow: 0 0 22px rgba(251, 146, 60, 0.3);
+      transform: rotate(-16deg) scale(calc(1.08 - var(--scroll-progress, 0) * 0.14));
+      animation: spinDisk 12s linear infinite;
+    }
+
+    .protostar-core {
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #fff7ed 0%, #fb923c 48%, #9d4edd 92%);
+      box-shadow: 0 0 38px rgba(251, 146, 60, 0.7), 0 0 70px rgba(157, 78, 221, 0.45);
+      transform: scale(calc(0.92 + var(--scroll-progress, 0) * 0.22));
+      animation: pulseCore 2.6s ease-in-out infinite;
+    }
+
+    /* Fase 4: Kernfusie ontsteekt */
+    .fusion-stage-core {
+      position: relative;
+      width: 210px;
+      height: 210px;
+      display: grid;
+      place-items: center;
+    }
+
+    .fusion-star {
+      width: 112px;
+      height: 112px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #ffffff 0%, var(--accent-gold) 34%, var(--accent-orange) 68%, var(--accent-purple) 100%);
+      box-shadow: 0 0 45px #fde047, 0 0 90px #fb923c, 0 0 130px rgba(56, 189, 248, 0.55);
+      animation: ignitePulse 2.2s ease-in-out infinite;
+    }
+
+    .fusion-ray {
+      position: absolute;
+      width: 190px;
+      height: 4px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, transparent, rgba(254, 240, 138, 0.85), transparent);
+      animation: raySpin 8s linear infinite;
+    }
+
+    .fusion-ray:nth-child(2) { transform: rotate(45deg); }
+    .fusion-ray:nth-child(3) { transform: rotate(90deg); }
+    .fusion-ray:nth-child(4) { transform: rotate(135deg); }
+
+    /* Fase 5: Jonge ster met planeetvormende schijf */
+    .young-star-system {
+      position: relative;
+      width: 220px;
+      height: 220px;
+      display: grid;
+      place-items: center;
+    }
+
+    .young-sun {
+      width: 78px;
+      height: 78px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #ffffff 0%, #fde047 45%, #fb923c 100%);
+      box-shadow: 0 0 35px rgba(253, 224, 71, 0.8), 0 0 65px rgba(56, 189, 248, 0.45);
+      z-index: 2;
+    }
+
+    .protoplanetary-ring {
+      position: absolute;
+      width: 196px;
+      height: 82px;
+      border-radius: 50%;
+      border: 2px solid rgba(56, 189, 248, 0.55);
+      transform: rotate(-18deg);
+    }
+
+    .proto-planet {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #e0f2fe, var(--accent-blue));
+      box-shadow: 0 0 12px var(--accent-blue);
+      animation: orbitMini 7s linear infinite;
+    }
+
+    .proto-planet.second {
+      width: 11px;
+      height: 11px;
+      background: radial-gradient(circle at 30% 30%, #ffedd5, var(--accent-orange));
+      box-shadow: 0 0 10px var(--accent-orange);
+      animation-duration: 11s;
+      animation-direction: reverse;
+    }
+
+    /* Interactieve modules: Massalab & Quiz */
+    .lab-and-quiz {
+      max-width: 1140px;
+      margin: 0 auto;
+      padding: 0 1.25rem 4.5rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      align-items: start;
+    }
+
+    .panel-card {
+      background: var(--bg-surface-strong);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: clamp(1.4rem, 3.2vw, 2.2rem);
+      box-shadow: 0 20px 55px rgba(0, 0, 0, 0.4);
+    }
+
+    .panel-title {
+      font-size: clamp(1.3rem, 2.5vw, 1.75rem);
+      margin-bottom: 0.55rem;
+    }
+
+    .panel-desc {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-bottom: 1.35rem;
+    }
+
+    .slider-block {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1rem 1.1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 0.5rem;
+      margin-bottom: 0.65rem;
+      font-weight: 700;
+    }
+
+    .mass-readout {
+      color: var(--accent-orange);
+      font-size: 1.05rem;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent-orange);
+      cursor: pointer;
+      height: 8px;
+    }
+
+    .sim-preview {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      gap: 1.15rem;
+      align-items: center;
+      background: rgba(7, 10, 24, 0.72);
+      border: 1px solid rgba(148, 163, 216, 0.16);
+      border-radius: var(--radius-md);
+      padding: 1.1rem;
+    }
+
+    .sim-star-holder {
+      height: 112px;
+      display: grid;
+      place-items: center;
+    }
+
+    .sim-star-ball {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #ffffff, #fb923c 65%, #9d4edd);
+      box-shadow: 0 0 26px rgba(251, 146, 60, 0.6);
+      transition: width 0.25s ease, height 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .sim-stats {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      font-size: 0.9rem;
+    }
+
+    .sim-badge {
+      display: inline-block;
+      align-self: flex-start;
+      padding: 0.22rem 0.65rem;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      background: rgba(56, 189, 248, 0.16);
+      color: #7dd3fc;
+      margin-bottom: 0.25rem;
+    }
+
+    /* Quiz stijlen */
+    .quiz-item {
+      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .quiz-q {
+      font-weight: 700;
+      font-size: 0.96rem;
+      margin-bottom: 0.65rem;
+    }
+
+    .quiz-options {
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+    }
+
+    .quiz-option {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      padding: 0.5rem 0.7rem;
+      border-radius: 9px;
+      border: 1px solid transparent;
+      background: rgba(255, 255, 255, 0.03);
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: background-color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .quiz-option:hover {
+      background: rgba(56, 189, 248, 0.1);
+      border-color: rgba(56, 189, 248, 0.35);
+    }
+
+    .quiz-option input {
+      accent-color: var(--accent-purple);
+      cursor: pointer;
+    }
+
+    .quiz-feedback {
+      margin-top: 1rem;
+      padding: 1rem 1.1rem;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      background: rgba(15, 23, 42, 0.88);
+      font-size: 0.92rem;
+    }
+
+    .feedback-line {
+      margin-bottom: 0.55rem;
+      padding-bottom: 0.55rem;
+      border-bottom: 1px solid rgba(148, 163, 216, 0.14);
+    }
+
+    .feedback-line:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+
+    .tag-good {
+      color: #4ade80;
+      font-weight: 700;
+    }
+
+    .tag-retry {
+      color: #fbbf24;
+      font-weight: 700;
+    }
+
+    .site-footer {
+      text-align: center;
+      padding: 1.5rem 1rem 2.5rem;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      border-top: 1px solid var(--border-subtle);
+      background: rgba(5, 6, 15, 0.75);
+    }
+
+    /* Keyframes */
+    @keyframes spinSlow {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes spinDisk {
+      to { transform: rotate(344deg) scale(calc(1.08 - var(--scroll-progress, 0) * 0.14)); }
+    }
+
+    @keyframes pulseCore {
+      0%, 100% { transform: scale(0.96); }
+      50% { transform: scale(1.06); }
+    }
+
+    @keyframes morphNebula {
+      0%, 100% { border-radius: 58% 42% 52% 48% / 44% 56% 44% 56%; }
+      50% { border-radius: 43% 57% 46% 54% / 55% 42% 58% 45%; }
+    }
+
+    @keyframes driftSpeck {
+      0%, 100% { transform: translate(0, 0); opacity: 0.45; }
+      50% { transform: translate(8px, -10px); opacity: 1; }
+    }
+
+    @keyframes pullInward {
+      0%, 100% { transform: scale(0.85); }
+      50% { transform: scale(1.12); }
+    }
+
+    @keyframes ignitePulse {
+      0%, 100% { transform: scale(0.97); }
+      50% { transform: scale(1.08); }
+    }
+
+    @keyframes raySpin {
+      to { transform: rotate(405deg); }
+    }
+
+    @keyframes orbitMini {
+      0% { transform: rotate(0deg) translateX(88px) rotate(0deg); }
+      100% { transform: rotate(360deg) translateX(88px) rotate(-360deg); }
+    }
+
+    /* Respecteer prefers-reduced-motion: rustige versie zonder heftige beweging */
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
+      }
+
+      *, *::before, *::after {
+        animation: none !important;
+        transition-duration: 0.05s !important;
+      }
+
+      .phase-section {
+        opacity: 1 !important;
+        transform: none !important;
+      }
+
+      .ambient-nebula {
+        transform: none !important;
+      }
+    }
+
+    /* Responsief: tablet & mobiel */
+    @media (max-width: 900px) {
+      .hero,
+      .phase-section,
+      .lab-and-quiz {
+        grid-template-columns: 1fr;
+      }
+
+      .phase-section:nth-child(even) .phase-stage {
+        order: 0;
+      }
+
+      .hero-orb-card {
+        max-width: 380px;
+        margin: 0 auto;
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 540px) {
+      .sim-preview {
+        grid-template-columns: 1fr;
+        justify-items: center;
+        text-align: center;
+      }
+
+      .sim-badge {
+        align-self: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="starfield-canvas" aria-hidden="true"></canvas>
+  <div class="ambient-nebula" aria-hidden="true"></div>
+  <div id="fusion-flash" class="fusion-flash-overlay" aria-hidden="true"></div>
+
+  <div class="page-shell">
+    <header class="top-nav">
+      <div class="top-nav-inner">
+        <a href="#top" class="brand-mark">
+          <span class="brand-dot" aria-hidden="true"></span>
+          <span>Sterrenfabriek · VWO 2</span>
+        </a>
+        <nav class="step-pills" aria-label="Fasen van sterrenvorming">
+          <button type="button" class="step-pill is-active" data-target="phase-1">1. Nevel</button>
+          <button type="button" class="step-pill" data-target="phase-2">2. Samentrekken</button>
+          <button type="button" class="step-pill" data-target="phase-3">3. Protoster</button>
+          <button type="button" class="step-pill" data-target="phase-4">4. Kernfusie</button>
+          <button type="button" class="step-pill" data-target="phase-5">5. Jonge ster</button>
+          <button type="button" class="step-pill" data-target="lab-quiz-anchor">Lab &amp; Quiz</button>
+        </nav>
+      </div>
+    </header>
+
+    <section id="top" class="hero">
+      <div>
+        <span class="eyebrow">Sterrenkunde · Van stof tot licht</span>
+        <h1>Hoe groeit een <span class="gradient-text">koude gaswolk</span> uit tot een stralende ster?</h1>
+        <p class="hero-lead">
+          Scroll rustig omlaag of klik op een fase om mee te kijken hoe zwaartekracht, warmte en kernfusie een nieuwe ster laten geboren worden in de ruimte.
+        </p>
+        <div class="hero-actions">
+          <button type="button" id="start-journey-btn" class="btn-primary">Start de reis (Fase 1)</button>
+          <a href="#lab-quiz-anchor" class="btn-secondary">Direct naar Massalab &amp; Quiz</a>
+        </div>
+      </div>
+
+      <aside class="hero-orb-card" aria-label="Overzicht">
+        <div class="hero-visual" aria-hidden="true">
+          <div class="hero-ring"></div>
+          <div class="hero-core"></div>
+        </div>
+        <p style="font-weight: 700; font-size: 1rem;">5 stappen van geboorte</p>
+        <p style="color: var(--text-muted); font-size: 0.88rem;">
+          Gebruik <kbd>←</kbd> en <kbd>→</kbd> op je toetsenbord of de knoppen per fase om door het verhaal te stappen.
+        </p>
+      </aside>
+    </section>
+
+    <main class="story-container">
+      <!-- FASE 1 -->
+      <article id="phase-1" class="phase-section" data-phase="1">
+        <div>
+          <span class="phase-tag">Fase 1 van 5 · De start</span>
+          <h2 class="phase-title">Een enorme koude gas- en stofwolk (nevel)</h2>
+          <p class="phase-text">
+            Tussen de sterren is de ruimte niet helemaal leeg. Daar zweven gigantische wolken van vooral waterstofgas, een beetje helium en microscopisch kleine stofdeeltjes. Zo’n wolk is ijskoud (vaak rond −250 °C) en enorm uitgestrekt.
+          </p>
+          <div class="glossary-box">
+            <strong>Begrip — Nevel (interstellaire wolk):</strong> een uitgestrekte wolk van gas en fijne stofdeeltjes tussen sterren.
+          </div>
+          <div class="fact-card">
+            <strong>Wist je dat?</strong> Eén zo’n nevel kan zó groot zijn dat licht er tientallen jaren over doet om er van de ene naar de andere kant doorheen te reizen.
+          </div>
+          <div class="phase-nav-row">
+            <button type="button" class="btn-step" data-go="phase-2">Volgende fase: samentrekken →</button>
+          </div>
+        </div>
+        <div class="phase-stage" aria-label="Animatie van een koude gas- en stofwolk">
+          <div class="nebula-cloud"></div>
+          <span class="dust-speck" aria-hidden="true"></span>
+          <span class="dust-speck" aria-hidden="true"></span>
+          <span class="dust-speck" aria-hidden="true"></span>
+          <span class="dust-speck" aria-hidden="true"></span>
+        </div>
+      </article>
+
+      <!-- FASE 2 -->
+      <article id="phase-2" class="phase-section" data-phase="2">
+        <div>
+          <span class="phase-tag">Fase 2 van 5 · Zwaartekracht aan het werk</span>
+          <h2 class="phase-title">De wolk trekt samen, draait en klontert</h2>
+          <p class="phase-text">
+            Als een deel van de wolk zwaar genoeg wordt—bijvoorbeeld door een schokgolf van een nabije supernova—wint de zwaartekracht het van de gasdruk. Gas en stof vallen naar binnen, de wolk gaat sneller draaien en splitst op in dichtere klonten.
+          </p>
+          <div class="glossary-box">
+            <strong>Begrip — Zwaartekracht:</strong> de aantrekkende kracht tussen massa’s; hoe meer massa dicht bij elkaar zit, hoe sterker de aantrekking.
+          </div>
+          <div class="fact-card">
+            <strong>Denkvraag:</strong> Waarom gaat een draaiende schaatser sneller tollen als ze haar armen intrekt? Precies hetzelfde principe laat een samentrekkende gaswolk sneller draaien!
+          </div>
+          <div class="phase-nav-row">
+            <button type="button" class="btn-step" data-go="phase-1">← Vorige</button>
+            <button type="button" class="btn-step" data-go="phase-3">Volgende fase: protoster →</button>
+          </div>
+        </div>
+        <div class="phase-stage" aria-label="Animatie van een samentrekkende en draaiende wolk met klonten">
+          <div class="collapse-wrapper">
+            <div class="collapse-ring"></div>
+            <span class="clump" aria-hidden="true"></span>
+            <span class="clump" aria-hidden="true"></span>
+            <span class="clump" aria-hidden="true"></span>
+            <span class="clump" aria-hidden="true"></span>
+          </div>
+        </div>
+      </article>
+
+      <!-- FASE 3 -->
+      <article id="phase-3" class="phase-section" data-phase="3">
+        <div>
+          <span class="phase-tag">Fase 3 van 5 · Opwarmen</span>
+          <h2 class="phase-title">De protoster: het centrum wordt dichter en heter</h2>
+          <p class="phase-text">
+            In het hart van een klont wordt het gas steeds dichter op elkaar gedrukt. Door die samendrukking botsen de deeltjes vaker en harder tegen elkaar aan: de temperatuur stijgt flink. Rond de hete kern blijft een draaiende schijf van gas en stof achter.
+          </p>
+          <div class="glossary-box">
+            <strong>Begrip — Protoster:</strong> een jonge, nog niet volledig ontstoken ster in wording die vooral gloeit door samentrekking en warmte, nog niet door kernfusie.
+          </div>
+          <div class="fact-card">
+            <strong>Wist je dat?</strong> Een protoster straalt veel infraroodstraling (warmtestraling) uit en zit vaak nog deels verstopt achter dikke stofwolken.
+          </div>
+          <div class="phase-nav-row">
+            <button type="button" class="btn-step" data-go="phase-2">← Vorige</button>
+            <button type="button" class="btn-step" data-go="phase-4">Volgende fase: kernfusie →</button>
+          </div>
+        </div>
+        <div class="phase-stage" aria-label="Animatie van een protoster met schijf">
+          <div class="protostar-wrap">
+            <div class="accretion-disk"></div>
+            <div class="protostar-core"></div>
+          </div>
+        </div>
+      </article>
+
+      <!-- FASE 4 -->
+      <article id="phase-4" class="phase-section" data-phase="4">
+        <div>
+          <span class="phase-tag">Fase 4 van 5 · De doorbraak</span>
+          <h2 class="phase-title">Kernfusie ontsteekt: waterstof wordt helium</h2>
+          <p class="phase-text">
+            In de kern loopt de temperatuur op tot ongeveer 15 miljoen °C en is de druk gigantisch. Waterstofkernen versmelten nu tot heliumkernen. Daarbij komt enorme energie vrij die als licht en warmte naar buiten straalt en de ster stabiel houdt.
+          </p>
+          <div class="glossary-box">
+            <strong>Begrip — Kernfusie:</strong> het samensmelten van lichte atoomkernen (zoals waterstof) tot een zwaardere kern (zoals helium), waarbij energie vrijkomt.
+          </div>
+          <div class="fact-card">
+            <strong>Prikkelend feit:</strong> Onze zon zet elke seconde zo’n 600 miljoen ton waterstof om in helium—toch heeft ze nog miljarden jaren brandstof over!
+          </div>
+          <div class="phase-nav-row">
+            <button type="button" class="btn-step" data-go="phase-3">← Vorige</button>
+            <button type="button" id="replay-fusion-btn" class="btn-step">⚡ Herhaal kernfusie-flits</button>
+            <button type="button" class="btn-step" data-go="phase-5">Volgende fase: jonge ster →</button>
+          </div>
+        </div>
+        <div class="phase-stage" aria-label="Animatie van een ster waarin kernfusie is ontstoken">
+          <div class="fusion-stage-core">
+            <span class="fusion-ray" aria-hidden="true"></span>
+            <span class="fusion-ray" aria-hidden="true"></span>
+            <span class="fusion-ray" aria-hidden="true"></span>
+            <span class="fusion-ray" aria-hidden="true"></span>
+            <div class="fusion-star"></div>
+          </div>
+        </div>
+      </article>
+
+      <!-- FASE 5 -->
+      <article id="phase-5" class="phase-section" data-phase="5">
+        <div>
+          <span class="phase-tag">Fase 5 van 5 · Nieuwe werelden</span>
+          <h2 class="phase-title">Een jonge ster met een schijf vol bouwstenen</h2>
+          <p class="phase-text">
+            De jonge ster schijnt nu helder en blaast met krachtige sterrenwind restgas weg. In de overgebleven schijf van gas en stof klonteren stofdeeltjes samen tot steeds grotere brokken—de bouwstenen voor planetoïden, manen en planeten.
+          </p>
+          <div class="glossary-box">
+            <strong>Begrip — Protoplanetaire schijf:</strong> een platte, draaiende schijf van gas en stof rond een jonge ster waarin planeten kunnen ontstaan.
+          </div>
+          <div class="fact-card">
+            <strong>Denkvraag:</strong> Waar komen de zwaardere atomen vandaan waaruit rotsplaneten zoals de aarde bestaan? Uit eerdere generaties sterren die hun bouwstenen de ruimte in slingerden!
+          </div>
+          <div class="phase-nav-row">
+            <button type="button" class="btn-step" data-go="phase-4">← Vorige</button>
+            <button type="button" class="btn-step" data-go="lab-quiz-anchor">Naar Massalab &amp; Quiz →</button>
+          </div>
+        </div>
+        <div class="phase-stage" aria-label="Animatie van een jonge ster met schijf en bewegende planeten in wording">
+          <div class="young-star-system">
+            <div class="protoplanetary-ring"></div>
+            <span class="proto-planet" aria-hidden="true"></span>
+            <span class="proto-planet second" aria-hidden="true"></span>
+            <div class="young-sun"></div>
+          </div>
+        </div>
+      </article>
+    </main>
+
+    <!-- INTERACTIEF MASSALAB & QUIZ -->
+    <section id="lab-quiz-anchor" class="lab-and-quiz" aria-label="Interactief onderzoek en quiz">
+      <div class="panel-card">
+        <span class="phase-tag">Interactief experiment</span>
+        <h2 class="panel-title">Massalab: wat doet de massa van de wolk?</h2>
+        <p class="panel-desc">
+          Verschuif de massa van de samentrekkende gaswolk (uitgedrukt in zonsmassa’s, <em>M</em><sub>☉</sub>) en bekijk hoe de ontstane ster eruitziet en zich gedraagt.
+        </p>
+
+        <div class="slider-block">
+          <div class="slider-header">
+            <label for="mass-slider">Massa van de kern / ster</label>
+            <span id="mass-value" class="mass-readout">1.0 Zonsmassa</span>
+          </div>
+          <input id="mass-slider" type="range" min="0.1" max="15" step="0.1" value="1.0" />
+        </div>
+
+        <div class="sim-preview">
+          <div class="sim-star-holder">
+            <div id="sim-star-ball" class="sim-star-ball" aria-hidden="true"></div>
+          </div>
+          <div class="sim-stats">
+            <span id="sim-badge" class="sim-badge">Gele dwerg (zoals onze zon)</span>
+            <div id="sim-outcome"><strong>Resultaat:</strong> Kernfusie van waterstof tot helium start stabiel.</div>
+            <div id="sim-lifespan"><strong>Levensduur:</strong> ongeveer 10 miljard jaar.</div>
+            <div id="sim-color"><strong>Kleur &amp; gloed:</strong> warm geel-wit licht.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-card">
+        <span class="phase-tag">Test je kennis</span>
+        <h2 class="panel-title">VWO 2 Sterrenquiz</h2>
+        <p class="panel-desc">Beantwoord vier vragen en bekijk meteen of je antwoorden kloppen.</p>
+
+        <form id="star-quiz-form">
+          <div class="quiz-item">
+            <p class="quiz-q">1. Welke kracht trekt een koude gas- en stofwolk samen zodat een ster kan ontstaan?</p>
+            <div class="quiz-options">
+              <label class="quiz-option"><input type="radio" name="q1" value="a" /> Zwaartekracht</label>
+              <label class="quiz-option"><input type="radio" name="q1" value="b" /> Magnetisme van de aarde</label>
+              <label class="quiz-option"><input type="radio" name="q1" value="c" /> Geluidsdruk in de ruimte</label>
+            </div>
+          </div>
+
+          <div class="quiz-item">
+            <p class="quiz-q">2. Wat gebeurt er in de kern van een ster zodra kernfusie start?</p>
+            <div class="quiz-options">
+              <label class="quiz-option"><input type="radio" name="q2" value="a" /> Helium verandert in ijzerstof zonder warmte</label>
+              <label class="quiz-option"><input type="radio" name="q2" value="b" /> Waterstofkernen smelten samen tot helium en geven energie af</label>
+              <label class="quiz-option"><input type="radio" name="q2" value="c" /> De ster koelt plotseling af tot −250 °C</label>
+            </div>
+          </div>
+
+          <div class="quiz-item">
+            <p class="quiz-q">3. Wat is een protoster precies?</p>
+            <div class="quiz-options">
+              <label class="quiz-option"><input type="radio" name="q3" value="a" /> Een oude ster die bijna op is</label>
+              <label class="quiz-option"><input type="radio" name="q3" value="b" /> Een hete, dichte kern in wording vóórdat stabiele kernfusie op gang komt</label>
+              <label class="quiz-option"><input type="radio" name="q3" value="c" /> Een rotsplaneet zonder atmosfeer</label>
+            </div>
+          </div>
+
+          <div class="quiz-item">
+            <p class="quiz-q">4. Waaruit kunnen uiteindelijk planeten ontstaan rond een jonge ster?</p>
+            <div class="quiz-options">
+              <label class="quiz-option"><input type="radio" name="q4" value="a" /> Uit de draaiende schijf van gas en stof rond de jonge ster</label>
+              <label class="quiz-option"><input type="radio" name="q4" value="b" /> Uit zwarte gaten die sterren opslokken</label>
+              <label class="quiz-option"><input type="radio" name="q4" value="c" /> Uit lege ruimte zonder stofdeeltjes</label>
+            </div>
+          </div>
+
+          <div class="phase-nav-row">
+            <button type="submit" class="btn-primary">Controleer antwoorden</button>
+            <button type="button" id="reset-quiz-btn" class="btn-secondary">Wis antwoorden</button>
+          </div>
+        </form>
+
+        <div id="quiz-feedback" class="quiz-feedback" hidden aria-live="polite"></div>
+      </div>
+    </section>
+
+    <footer class="site-footer">
+      Sterrenfabriek · Interactief lesmateriaal voor VWO 2 · Gemaakt met HTML, CSS &amp; Vanilla JavaScript.
+    </footer>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // Veilige controle op voorkeur voor minder beweging
+      const reducedMotionQuery = typeof window.matchMedia === 'function'
+        ? window.matchMedia('(prefers-reduced-motion: reduce)')
+        : { matches: false, addEventListener: null, removeEventListener: null };
+
+      let prefersReducedMotion = Boolean(reducedMotionQuery.matches);
+
+      // Verwijzingen naar DOM-elementen met veilige fallback
+      const canvas = document.getElementById('starfield-canvas');
+      const nebulaEl = document.querySelector('.ambient-nebula');
+      const flashEl = document.getElementById('fusion-flash');
+      const phaseSections = Array.from(document.querySelectorAll('.phase-section'));
+      const navPills = Array.from(document.querySelectorAll('.step-pill'));
+      const massSlider = document.getElementById('mass-slider');
+      const massValueEl = document.getElementById('mass-value');
+      const simStarBall = document.getElementById('sim-star-ball');
+      const simBadge = document.getElementById('sim-badge');
+      const simOutcome = document.getElementById('sim-outcome');
+      const simLifespan = document.getElementById('sim-lifespan');
+      const simColor = document.getElementById('sim-color');
+      const quizForm = document.getElementById('star-quiz-form');
+      const quizFeedback = document.getElementById('quiz-feedback');
+      const resetQuizBtn = document.getElementById('reset-quiz-btn');
+      const startJourneyBtn = document.getElementById('start-journey-btn');
+      const replayFusionBtn = document.getElementById('replay-fusion-btn');
+
+      // Bijhouden of de pagina zichtbaar is en of het canvas in beeld is
+      let isPageVisible = document.visibilityState !== 'hidden';
+      let isCanvasVisible = true;
+      let animationFrameId = null;
+      let flashTimeoutId = null;
+      let hasTriggeredPhase4Flash = false;
+      let currentActivePhaseIndex = 0;
+
+      // Scroll-hulpfunctie (met fallback voor oudere browsers)
+      function scrollToElement(el) {
+        if (!el) return;
+        try {
+          el.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' });
+        } catch (_err) {
+          el.scrollIntoView();
+        }
+      }
+
+      // Kernfusie flits- en gloedmoment activeren
+      function triggerFusionFlash() {
+        if (!flashEl || prefersReducedMotion) return;
+        flashEl.classList.remove('is-active');
+        // Forceer reflow zodat herhalen soepel werkt
+        void flashEl.offsetWidth;
+        flashEl.classList.add('is-active');
+
+        if (flashTimeoutId !== null) {
+          window.clearTimeout(flashTimeoutId);
+        }
+        flashTimeoutId = window.setTimeout(() => {
+          flashEl.classList.remove('is-active');
+          flashTimeoutId = null;
+        }, 720);
+      }
+
+      // Actieve fase in navigatie markeren
+      function setActivePillByTarget(targetId) {
+        navPills.forEach((pill) => {
+          const isMatch = pill.getAttribute('data-target') === targetId;
+          pill.classList.toggle('is-active', isMatch);
+        });
+      }
+
+      // Scroll-voortgang per fase bijwerken voor subtiele transformaties
+      function updateScrollProgress() {
+        const vh = window.innerHeight || 800;
+        let closestIndex = 0;
+        let closestDistance = Infinity;
+
+        phaseSections.forEach((section, index) => {
+          const rect = section.getBoundingClientRect();
+          const totalTravel = vh + rect.height;
+          const rawProgress = totalTravel > 0 ? (vh - rect.top) / totalTravel : 0;
+          const clamped = Math.max(0, Math.min(1, rawProgress));
+          section.style.setProperty('--scroll-progress', clamped.toFixed(3));
+
+          if (rect.top < vh * 0.85) {
+            section.classList.add('is-visible');
+          }
+
+          const centerDist = Math.abs((rect.top + rect.height * 0.5) - vh * 0.45);
+          if (centerDist < closestDistance) {
+            closestDistance = centerDist;
+            closestIndex = index;
+          }
+        });
+
+        currentActivePhaseIndex = closestIndex;
+        phaseSections.forEach((sec, idx) => {
+          sec.classList.toggle('is-current', idx === closestIndex);
+        });
+
+        const currentSection = phaseSections[closestIndex];
+        if (currentSection && currentSection.id) {
+          // Alleen bijwerken als we in het fase-gebied zitten
+          const firstTop = phaseSections[0] ? phaseSections[0].getBoundingClientRect().top : 0;
+          const lastBottom = phaseSections[phaseSections.length - 1]
+            ? phaseSections[phaseSections.length - 1].getBoundingClientRect().bottom
+            : vh;
+
+          if (firstTop < vh * 0.55 && lastBottom > vh * 0.15) {
+            setActivePillByTarget(currentSection.id);
+          }
+
+          if (currentSection.id === 'phase-4' && !hasTriggeredPhase4Flash) {
+            hasTriggeredPhase4Flash = true;
+            triggerFusionFlash();
+          } else if (currentSection.id !== 'phase-4') {
+            hasTriggeredPhase4Flash = false;
+          }
+        }
+      }
+
+      // Sterrenhemel op <canvas> met goede foutafhandeling
+      const ctx = canvas && typeof canvas.getContext === 'function' ? canvas.getContext('2d') : null;
+      let stars = [];
+      let canvasWidth = 0;
+      let canvasHeight = 0;
+      let parallaxTargetX = 0;
+      let parallaxTargetY = 0;
+      let parallaxCurrentX = 0;
+      let parallaxCurrentY = 0;
+
+      function createStars(count) {
+        const list = [];
+        for (let i = 0; i < count; i += 1) {
+          const layer = (i % 3) + 1; // 1 = ver, 2 = midden, 3 = dichtbij
+          list.push({
+            x: Math.random() * canvasWidth,
+            y: Math.random() * canvasHeight,
+            radius: layer * 0.65 + Math.random() * 0.7,
+            baseAlpha: 0.35 + layer * 0.2,
+            twinkleSpeed: 0.008 + Math.random() * 0.015,
+            phase: Math.random() * Math.PI * 2,
+            layer
+          });
+        }
+        return list;
+      }
+
+      function resizeCanvas() {
+        if (!canvas || !ctx) return;
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvasWidth = Math.max(1, window.innerWidth);
+        canvasHeight = Math.max(1, window.innerHeight);
+        canvas.width = Math.floor(canvasWidth * dpr);
+        canvas.height = Math.floor(canvasHeight * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        const densityCount = Math.min(180, Math.max(55, Math.floor((canvasWidth * canvasHeight) / 11000)));
+        stars = createStars(densityCount);
+        renderStarfield(0);
+      }
+
+      function renderStarfield(timeMs) {
+        if (!ctx || canvasWidth === 0 || canvasHeight === 0) return;
+        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+        const scrollY = window.scrollY || window.pageYOffset || 0;
+
+        for (let i = 0; i < stars.length; i += 1) {
+          const s = stars[i];
+          const pxOffset = parallaxCurrentX * s.layer * 0.45;
+          const pyOffset = (parallaxCurrentY * s.layer * 0.45) - ((scrollY * s.layer * 0.08) % canvasHeight);
+
+          let drawX = (s.x + pxOffset) % canvasWidth;
+          if (drawX < 0) drawX += canvasWidth;
+
+          let drawY = (s.y + pyOffset) % canvasHeight;
+          if (drawY < 0) drawY += canvasHeight;
+
+          const twinkle = prefersReducedMotion
+            ? s.baseAlpha
+            : s.baseAlpha + Math.sin(timeMs * s.twinkleSpeed + s.phase) * 0.22;
+
+          ctx.beginPath();
+          ctx.arc(drawX, drawY, s.radius, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(241, 245, 255, ${Math.max(0.12, Math.min(1, twinkle)).toFixed(2)})`;
+          ctx.fill();
+        }
+
+        if (nebulaEl && !prefersReducedMotion) {
+          nebulaEl.style.setProperty('--px', `${(parallaxCurrentX * -0.35).toFixed(1)}px`);
+          nebulaEl.style.setProperty('--py', `${(parallaxCurrentY * -0.35).toFixed(1)}px`);
+        }
+      }
+
+      function shouldAnimateLoop() {
+        return Boolean(ctx) && !prefersReducedMotion && isPageVisible && isCanvasVisible;
+      }
+
+      function startStarLoop() {
+        if (animationFrameId !== null || !shouldAnimateLoop()) return;
+
+        const tick = (now) => {
+          if (!shouldAnimateLoop()) {
+            animationFrameId = null;
+            return;
+          }
+          parallaxCurrentX += (parallaxTargetX - parallaxCurrentX) * 0.08;
+          parallaxCurrentY += (parallaxTargetY - parallaxCurrentY) * 0.08;
+          renderStarfield(now);
+          animationFrameId = window.requestAnimationFrame(tick);
+        };
+
+        animationFrameId = window.requestAnimationFrame(tick);
+      }
+
+      function stopStarLoop() {
+        if (animationFrameId !== null) {
+          window.cancelAnimationFrame(animationFrameId);
+          animationFrameId = null;
+        }
+      }
+
+      // Interactief Massalab bijwerken
+      function updateMassSimulation() {
+        if (!massSlider) return;
+        const mass = parseFloat(massSlider.value);
+        if (Number.isNaN(mass)) return;
+
+        if (massValueEl) {
+          massValueEl.textContent = `${mass.toFixed(1)} Zonsmassa`;
+        }
+
+        let badgeText = 'Gele dwerg (zoals onze zon)';
+        let outcomeText = 'Kernfusie van waterstof tot helium verloopt rustig en stabiel.';
+        let lifespanText = 'ongeveer 10 miljard jaar.';
+        let colorText = 'helder geel-wit licht.';
+        let sizePx = 58;
+        let gradientCss = 'radial-gradient(circle at 35% 30%, #ffffff, #fde047 52%, #fb923c 90%)';
+        let glowCss = '0 0 30px rgba(253, 224, 71, 0.65)';
+
+        if (mass < 0.5) {
+          badgeText = 'Rode dwerg (lichte ster)';
+          outcomeText = 'Zwaartekracht is mild; kernfusie gaat langzaam maar heel zuinig.';
+          lifespanText = 'tientallen tot honderden miljarden jaren.';
+          colorText = 'zacht oranje-rood licht.';
+          sizePx = 40;
+          gradientCss = 'radial-gradient(circle at 35% 30%, #ffedd5, #fb923c 58%, #9d174d 100%)';
+          glowCss = '0 0 22px rgba(251, 146, 60, 0.5)';
+        } else if (mass > 4.0) {
+          badgeText = 'Zware blauwe / heldere ster';
+          outcomeText = 'Sterke zwaartekracht perst de kern extra heet; kernfusie gaat razendsnel.';
+          lifespanText = 'slechts enkele tientallen miljoenen jaren (kort en fel).';
+          colorText = 'fel blauw-wit licht.';
+          sizePx = 88;
+          gradientCss = 'radial-gradient(circle at 35% 30%, #ffffff, #7dd3fc 48%, #38bdf8 82%, #818cf8 100%)';
+          glowCss = '0 0 46px rgba(56, 189, 248, 0.8), 0 0 75px rgba(129, 140, 248, 0.45)';
+        }
+
+        if (simBadge) simBadge.textContent = badgeText;
+        if (simOutcome) simOutcome.innerHTML = `<strong>Resultaat:</strong> ${outcomeText}`;
+        if (simLifespan) simLifespan.innerHTML = `<strong>Levensduur:</strong> ${lifespanText}`;
+        if (simColor) simColor.innerHTML = `<strong>Kleur &amp; gloed:</strong> ${colorText}`;
+        if (simStarBall) {
+          simStarBall.style.width = `${sizePx}px`;
+          simStarBall.style.height = `${sizePx}px`;
+          simStarBall.style.background = gradientCss;
+          simStarBall.style.boxShadow = glowCss;
+        }
+      }
+
+      // Quiz nakijken met directe uitleg
+      const answerKey = {
+        q1: {
+          correct: 'a',
+          explain: 'Zwaartekracht trekt gas en stof samen tot dichtere klonten en een hete kern.'
+        },
+        q2: {
+          correct: 'b',
+          explain: 'Bij kernfusie versmelten waterstofkernen tot heliumkernen waarbij veel energie vrijkomt.'
+        },
+        q3: {
+          correct: 'b',
+          explain: 'Een protoster warmt op door samentrekking vóórdat stabiele waterstoffusie in de kern begint.'
+        },
+        q4: {
+          correct: 'a',
+          explain: 'In de schijf van gas en stof rond de jonge ster klontert materiaal samen tot planeten.'
+        }
+      };
+
+      function handleQuizSubmit(event) {
+        event.preventDefault();
+        if (!quizForm || !quizFeedback) return;
+
+        let score = 0;
+        const total = Object.keys(answerKey).length;
+        const lines = [];
+
+        Object.keys(answerKey).forEach((qName, idx) => {
+          const checked = quizForm.querySelector(`input[name="${qName}"]:checked`);
+          const chosen = checked ? checked.value : null;
+          const isRight = chosen === answerKey[qName].correct;
+          if (isRight) score += 1;
+
+          lines.push(
+            `<div class="feedback-line">` +
+            `<span class="${isRight ? 'tag-good' : 'tag-retry'}">Vraag ${idx + 1}: ${isRight ? 'Goed!' : 'Nog even nakijken'}</span> ` +
+            `<span>${answerKey[qName].explain}</span>` +
+            `</div>`
+          );
+        });
+
+        quizFeedback.innerHTML =
+          `<p style="font-weight: 800; margin-bottom: 0.65rem;">Score: ${score} van de ${total} goed.</p>` +
+          lines.join('');
+        quizFeedback.hidden = false;
+      }
+
+      function handleQuizReset() {
+        if (!quizForm || !quizFeedback) return;
+        quizForm.reset();
+        quizFeedback.hidden = true;
+        quizFeedback.innerHTML = '';
+      }
+
+      // Event listeners registreren en opruimen bij pagehide
+      function onScrollOrResize() {
+        updateScrollProgress();
+      }
+
+      function onPointerMove(event) {
+        if (prefersReducedMotion) return;
+        const w = window.innerWidth || 1;
+        const h = window.innerHeight || 1;
+        parallaxTargetX = ((event.clientX / w) - 0.5) * 28;
+        parallaxTargetY = ((event.clientY / h) - 0.5) * 28;
+      }
+
+      function onKeyDown(event) {
+        const tag = event.target && event.target.tagName ? event.target.tagName.toLowerCase() : '';
+        if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+
+        if (event.key === 'ArrowRight') {
+          const nextIdx = Math.min(phaseSections.length - 1, currentActivePhaseIndex + 1);
+          scrollToElement(phaseSections[nextIdx]);
+        } else if (event.key === 'ArrowLeft') {
+          const prevIdx = Math.max(0, currentActivePhaseIndex - 1);
+          scrollToElement(phaseSections[prevIdx]);
+        }
+      }
+
+      function onVisibilityChange() {
+        isPageVisible = document.visibilityState !== 'hidden';
+        if (isPageVisible) {
+          startStarLoop();
+        } else {
+          stopStarLoop();
+        }
+      }
+
+      function onMotionPreferenceChange(event) {
+        prefersReducedMotion = Boolean(event.matches);
+        if (prefersReducedMotion) {
+          stopStarLoop();
+          if (flashEl) flashEl.classList.remove('is-active');
+          renderStarfield(0);
+        } else {
+          startStarLoop();
+        }
+      }
+
+      // IntersectionObserver voor zichtbaarheid van fasen en canvas
+      let sectionObserver = null;
+      let canvasObserver = null;
+
+      if (typeof window.IntersectionObserver === 'function') {
+        sectionObserver = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                entry.target.classList.add('is-visible');
+              }
+            });
+          },
+          { threshold: 0.12 }
+        );
+        phaseSections.forEach((sec) => sectionObserver.observe(sec));
+
+        if (canvas) {
+          canvasObserver = new IntersectionObserver(
+            (entries) => {
+              entries.forEach((entry) => {
+                isCanvasVisible = Boolean(entry.isIntersecting);
+                if (isCanvasVisible) {
+                  startStarLoop();
+                } else {
+                  stopStarLoop();
+                }
+              });
+            },
+            { threshold: 0.01 }
+          );
+          canvasObserver.observe(canvas);
+        }
+      } else {
+        phaseSections.forEach((sec) => sec.classList.add('is-visible'));
+      }
+
+      // Navigatieknoppen koppelen
+      navPills.forEach((pill) => {
+        pill.addEventListener('click', () => {
+          const targetId = pill.getAttribute('data-target');
+          const targetEl = targetId ? document.getElementById(targetId) : null;
+          setActivePillByTarget(targetId);
+          scrollToElement(targetEl);
+        });
+      });
+
+      document.querySelectorAll('[data-go]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const targetId = btn.getAttribute('data-go');
+          const targetEl = targetId ? document.getElementById(targetId) : null;
+          scrollToElement(targetEl);
+        });
+      });
+
+      if (startJourneyBtn) {
+        startJourneyBtn.addEventListener('click', () => {
+          scrollToElement(document.getElementById('phase-1'));
+        });
+      }
+
+      if (replayFusionBtn) {
+        replayFusionBtn.addEventListener('click', () => {
+          triggerFusionFlash();
+        });
+      }
+
+      if (massSlider) {
+        massSlider.addEventListener('input', updateMassSimulation);
+      }
+
+      if (quizForm) {
+        quizForm.addEventListener('submit', handleQuizSubmit);
+      }
+
+      if (resetQuizBtn) {
+        resetQuizBtn.addEventListener('click', handleQuizReset);
+      }
+
+      window.addEventListener('scroll', onScrollOrResize, { passive: true });
+      window.addEventListener('resize', () => {
+        resizeCanvas();
+        updateScrollProgress();
+      });
+      window.addEventListener('pointermove', onPointerMove, { passive: true });
+      window.addEventListener('keydown', onKeyDown);
+      document.addEventListener('visibilitychange', onVisibilityChange);
+
+      if (typeof reducedMotionQuery.addEventListener === 'function') {
+        reducedMotionQuery.addEventListener('change', onMotionPreferenceChange);
+      } else if (typeof reducedMotionQuery.addListener === 'function') {
+        reducedMotionQuery.addListener(onMotionPreferenceChange);
+      }
+
+      // Opruimen van timers, animatieframes en observers bij verlaten van de pagina
+      window.addEventListener('pagehide', () => {
+        stopStarLoop();
+        if (flashTimeoutId !== null) {
+          window.clearTimeout(flashTimeoutId);
+          flashTimeoutId = null;
+        }
+        if (sectionObserver) sectionObserver.disconnect();
+        if (canvasObserver) canvasObserver.disconnect();
+        window.removeEventListener('scroll', onScrollOrResize);
+        window.removeEventListener('pointermove', onPointerMove);
+        window.removeEventListener('keydown', onKeyDown);
+        document.removeEventListener('visibilitychange', onVisibilityChange);
+        if (typeof reducedMotionQuery.removeEventListener === 'function') {
+          reducedMotionQuery.removeEventListener('change', onMotionPreferenceChange);
+        } else if (typeof reducedMotionQuery.removeListener === 'function') {
+          reducedMotionQuery.removeListener(onMotionPreferenceChange);
+        }
+      });
+
+      // Initiële opbouw
+      resizeCanvas();
+      updateScrollProgress();
+      updateMassSimulation();
+      startStarLoop();
+    })();
+  </script>
+</body>
+</html>
